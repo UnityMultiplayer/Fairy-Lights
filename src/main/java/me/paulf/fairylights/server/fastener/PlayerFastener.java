@@ -57,7 +57,7 @@ public final class PlayerFastener extends EntityFastener<Player> {
     }
 
     private boolean matchesStack(final ItemStack stack) {
-        return this.getFirstConnection().filter(connection -> connection.matches(stack)).isPresent();
+        return this.getFirstConnection().filter(connection -> connection.matches(stack, this.entity.registryAccess())).isPresent();
     }
 
     @Override

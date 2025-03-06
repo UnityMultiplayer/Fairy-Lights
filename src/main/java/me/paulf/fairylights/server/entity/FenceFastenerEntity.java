@@ -158,7 +158,7 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityW
                 this.dropItem(null);
                 this.remove(RemovalReason.DISCARDED);
             } else if (fastener.update() && !this.level().isClientSide()) {
-                final UpdateEntityFastenerMessage msg = new UpdateEntityFastenerMessage(this, fastener.serializeNBT());
+                final UpdateEntityFastenerMessage msg = new UpdateEntityFastenerMessage(this, fastener.serializeNBT(this.registryAccess()));
                 ServerProxy.sendToPlayersWatchingEntity(msg, this);
             }
         });
@@ -200,7 +200,7 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityW
     public void writeSpawnData(final RegistryFriendlyByteBuf buf) {
         this.getFastener().ifPresent(fastener -> {
             try {
-                NbtIo.write(fastener.serializeNBT(), new ByteBufOutputStream(buf));
+                NbtIo.write(fastener.serializeNBT(this.registryAccess()), new ByteBufOutputStream(buf));
             } catch (final IOException e) {
                 throw new RuntimeException(e);
             }

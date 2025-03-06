@@ -242,8 +242,8 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
     }
 
     @Override
-    public CompoundTag serialize() {
-        final CompoundTag compound = super.serialize();
+    public CompoundTag serialize(HolderLookup.Provider registries) {
+        final CompoundTag compound = super.serialize(registries);
         compound.put("jinglePlayer", this.jinglePlayer.serialize());
         compound.putBoolean("isOn", this.isOn);
         final ListTag litBlocks = new ListTag();
@@ -274,8 +274,8 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
     }
 
     @Override
-    public CompoundTag serializeLogic() {
-        final CompoundTag compound = super.serializeLogic();
+    public CompoundTag serializeLogic(HolderLookup.Provider registries) {
+        final CompoundTag compound = super.serializeLogic(registries);
         HangingLightsConnectionItem.setString(compound, this.string);
         final ListTag tagList = new ListTag();
         for (final ItemStack light : this.pattern) {

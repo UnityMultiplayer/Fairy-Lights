@@ -87,7 +87,7 @@ public abstract class ConnectionItem extends Item {
     private boolean isConnectionInOtherHand(final Level world, final Player user, final ItemStack stack) {
         final Fastener<?> attacher = CapabilityHandler.FASTENER_CAP.maybeGet(user).orElseThrow(IllegalStateException::new);
         return attacher.getFirstConnection().filter(connection -> {
-            final CompoundTag nbt = connection.serializeLogic();
+            final CompoundTag nbt = connection.serializeLogic(world.registryAccess());
 
             if (nbt.isEmpty())
                 return true;

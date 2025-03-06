@@ -215,7 +215,7 @@ public abstract class Connection implements NBTSerializable {
 
     public boolean interact(final Player player, final Vec3 hit, final FeatureType featureType, final int feature, final ItemStack heldStack, final InteractionHand hand) {
         final Item item = heldStack.getItem();
-        if (item instanceof ConnectionItem && !this.matches(heldStack)) {
+        if (item instanceof ConnectionItem && !this.matches(heldStack, player.registryAccess())) {
             return this.replace(player, hit, heldStack);
         } else if (heldStack.is(ConventionalItemTags.STRINGS)) {
             return this.slacken(hit, heldStack, 0.2F);
@@ -225,10 +225,10 @@ public abstract class Connection implements NBTSerializable {
         return false;
     }
 
-    public boolean matches(final ItemStack stack) {
+    public boolean matches(final ItemStack stack, HolderLookup.Provider registries) {
         if (this.getType().getItem().equals(stack.getItem())) {
             final CompoundTag tag = stack.get(FLComponents.CONNECTION_DATA);
-            return tag == null || Utils.impliesNbt(this.serializeLogic(), tag);
+            return tag == null || Utils.impliesNbt(this.serializeLogic(registries), tag);
         }
         return false;
     }
@@ -383,10 +383,10 @@ public abstract class Connection implements NBTSerializable {
     }
 
     @Override
-    public CompoundTag serialize() {
+    public CompoundTag serialize(HolderLookup.Provider registries) {
         final CompoundTag compound = new CompoundTag();
         compound.put("destination", FastenerType.serialize(this.destination));
-        compound.put("logic", this.serializeLogic());
+        compound.put("logic", this.serializeLogic(registries));
         compound.putFloat("slack", this.slack);
         if (!this.drop) compound.putBoolean("drop", false);
         return compound;
@@ -401,7 +401,7 @@ public abstract class Connection implements NBTSerializable {
         this.updateCatenary = true;
     }
 
-    public CompoundTag serializeLogic() {
+    public CompoundTag serializeLogic(HolderLookup.Provider registries) {
         return new CompoundTag();
     }
 

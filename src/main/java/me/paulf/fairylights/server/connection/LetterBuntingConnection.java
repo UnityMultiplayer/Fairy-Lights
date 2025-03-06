@@ -197,8 +197,8 @@ public final class LetterBuntingConnection extends Connection implements Lettere
     }
 
     @Override
-    public CompoundTag serializeLogic() {
-        final CompoundTag compound = super.serializeLogic();
+    public CompoundTag serializeLogic(HolderLookup.Provider registries) {
+        final CompoundTag compound = super.serializeLogic(registries);
         compound.put("text", StyledString.serialize(this.text));
         return compound;
     }

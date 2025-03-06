@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface Fastener<F extends FastenerAccessor> extends Component {
-    CompoundTag serializeNBT();
+    CompoundTag serializeNBT(HolderLookup.Provider registries);
     void deserializeNBT(CompoundTag tag, HolderLookup.Provider registries);
 
     @Override
@@ -29,7 +29,7 @@ public interface Fastener<F extends FastenerAccessor> extends Component {
 
     @Override
     default void writeToNbt(CompoundTag tag, HolderLookup.Provider registryLookup) {
-        tag.put("data", this.serializeNBT());
+        tag.put("data", this.serializeNBT(registryLookup));
     }
 
     Optional<Connection> get(final UUID id);

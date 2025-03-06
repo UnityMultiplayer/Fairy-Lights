@@ -57,7 +57,7 @@ public final class ServerEventHandler {
     public void onTick(final Player player) {
         CapabilityHandler.FASTENER_CAP.maybeGet(player).ifPresent(fastener -> {
             if (fastener.update() && !player.level().isClientSide()) {
-                ServerProxy.sendToPlayersWatchingEntity(new UpdateEntityFastenerMessage(player, fastener.serializeNBT()), player);
+                ServerProxy.sendToPlayersWatchingEntity(new UpdateEntityFastenerMessage(player, fastener.serializeNBT(player.registryAccess())), player);
             }
         });
     }

@@ -119,8 +119,8 @@ public final class PennantBuntingConnection extends HangingFeatureConnection<Pen
     }
 
     @Override
-    public CompoundTag serializeLogic() {
-        final CompoundTag compound = super.serializeLogic();
+    public CompoundTag serializeLogic(HolderLookup.Provider registries) {
+        final CompoundTag compound = super.serializeLogic(registries);
         final ListTag patternList = new ListTag();
         for (final ItemStack entry : this.pattern) {
             patternList.add(entry.save(ServerLifecycleHooks.getCurrentServer().registryAccess()));

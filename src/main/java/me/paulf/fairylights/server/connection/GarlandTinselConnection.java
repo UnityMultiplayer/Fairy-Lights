@@ -29,8 +29,8 @@ public final class GarlandTinselConnection extends Connection {
     }
 
     @Override
-    public CompoundTag serializeLogic() {
-        return DyeableItem.setColor(super.serializeLogic(), this.color);
+    public CompoundTag serializeLogic(HolderLookup.Provider registries) {
+        return DyeableItem.setColor(super.serializeLogic(registries), this.color);
     }
 
     @Override

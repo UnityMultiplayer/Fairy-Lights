@@ -248,14 +248,14 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
     }
 
     @Override
-    public CompoundTag serializeNBT() {
+    public CompoundTag serializeNBT(HolderLookup.Provider registries) {
         final CompoundTag compound = new CompoundTag();
         final ListTag outgoing = new ListTag();
         for (final Entry<UUID, Connection> connectionEntry : this.outgoing.entrySet()) {
             final UUID uuid = connectionEntry.getKey();
             final Connection connection = connectionEntry.getValue();
             final CompoundTag connectionCompound = new CompoundTag();
-            connectionCompound.put("connection", connection.serialize());
+            connectionCompound.put("connection", connection.serialize(registries));
             connectionCompound.putString("type", RegistryObjects.getName(FairyLights.CONNECTION_TYPES, connection.getType()).toString());
             connectionCompound.putUUID("uuid", uuid);
             outgoing.add(connectionCompound);
