@@ -1,6 +1,5 @@
 package me.paulf.fairylights.server.connection;
 
-import io.github.fabricators_of_create.porting_lib.core.util.ServerLifecycleHooks;
 import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
 import me.paulf.fairylights.client.gui.EditLetteredConnectionScreen;
 import me.paulf.fairylights.server.collision.Intersection;
@@ -123,7 +122,7 @@ public final class PennantBuntingConnection extends HangingFeatureConnection<Pen
         final CompoundTag compound = super.serializeLogic(registries);
         final ListTag patternList = new ListTag();
         for (final ItemStack entry : this.pattern) {
-            patternList.add(entry.save(ServerLifecycleHooks.getCurrentServer().registryAccess()));
+            patternList.add(entry.save(registries));
         }
         compound.put("pattern", patternList);
         compound.put("text", StyledString.serialize(this.text));

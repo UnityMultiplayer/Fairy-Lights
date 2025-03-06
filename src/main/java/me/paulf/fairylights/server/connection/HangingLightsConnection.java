@@ -1,6 +1,5 @@
 package me.paulf.fairylights.server.connection;
 
-import io.github.fabricators_of_create.porting_lib.core.util.ServerLifecycleHooks;
 import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
 import me.paulf.fairylights.server.block.FLBlocks;
 import me.paulf.fairylights.server.fastener.Fastener;
@@ -279,7 +278,7 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
         HangingLightsConnectionItem.setString(compound, this.string);
         final ListTag tagList = new ListTag();
         for (final ItemStack light : this.pattern) {
-            tagList.add(light.save(ServerLifecycleHooks.getCurrentServer().registryAccess()));
+            tagList.add(light.save(registries));
         }
         compound.put("pattern", tagList);
         return compound;
@@ -303,7 +302,7 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
         this.pattern = new ArrayList<>();
         for (int i = 0; i < patternList.size(); i++) {
             final CompoundTag lightCompound = patternList.getCompound(i);
-            this.pattern.add(ItemStack.parseOptional(ServerLifecycleHooks.getCurrentServer().registryAccess(), lightCompound));
+            this.pattern.add(ItemStack.parseOptional(registries, lightCompound));
         }
     }
 
