@@ -1,21 +1,14 @@
 package me.paulf.fairylights.server.item;
 
+import me.paulf.fairylights.server.block.LightBlock;
 import me.paulf.fairylights.server.feature.light.LightBehavior;
-import me.paulf.fairylights.util.EmptyProvider;
-import me.paulf.fairylights.util.SimpleProvider;
+import me.paulf.fairylights.server.item.components.FLComponents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.CapabilityManager;
-import net.minecraftforge.common.capabilities.CapabilityToken;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.LazyOptional;
+
+import java.util.Optional;
 
 public interface LightVariant<T extends LightBehavior> {
-    final class Holder {
-        public static Capability<LightVariant<?>> CAPABILITY = CapabilityManager.get(new CapabilityToken<>() {});
-    }
-
     boolean parallelsCord();
 
     float getSpacing();
@@ -28,11 +21,16 @@ public interface LightVariant<T extends LightBehavior> {
 
     boolean isOrientable();
 
-    static LazyOptional<LightVariant<?>> get(final ICapabilityProvider provider) {
-        return provider.getCapability(Holder.CAPABILITY);
-    }
+    static Optional<LightVariant<?>> get(ItemStack stack) {
+        if (!stack.has(FLComponents.LIGHT_BLOCK))
+            return Optional.empty();
 
-    static ICapabilityProvider provider(final LightVariant<?> variant) {
-        return Holder.CAPABILITY == null ? new EmptyProvider() : new SimpleProvider<>(Holder.CAPABILITY, variant);
+        var block = stack.get(FLComponents.LIGHT_BLOCK);
+
+        if (block instanceof LightBlock light) {
+            return Optional.of(light.getVariant());
+        }
+
+        return Optional.empty();
     }
 }

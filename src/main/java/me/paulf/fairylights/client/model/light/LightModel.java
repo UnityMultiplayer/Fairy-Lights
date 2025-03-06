@@ -10,11 +10,12 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,8 +93,8 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
         if (this.bounds == null) {
             final PoseStack matrix = new PoseStack();
             final AABBVertexBuilder builder = new AABBVertexBuilder();
-            this.renderToBuffer(matrix, builder, 0, 0, 1.0F, 1.0F, 1.0F, 1.0F);
-            this.renderTranslucent(matrix, builder, 0, 0, 1.0F, 1.0F, 1.0F, 1.0F);
+            this.renderToBuffer(matrix, builder, 0, 0, FastColor.ARGB32.color(255, 255, 255, 255));
+            this.renderTranslucent(matrix, builder, 0, 0, FastColor.ARGB32.color(255, 255, 255, 255));
             this.bounds = builder.build();
         }
         return this.bounds;
@@ -102,7 +103,7 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
     public double getFloorOffset() {
         if (Double.isNaN(this.floorOffset)) {
             final AABBVertexBuilder builder = new AABBVertexBuilder();
-            this.renderToBuffer(new PoseStack(), builder, 0, 0, 1.0F, 1.0F, 1.0F, 1.0F);
+            this.renderToBuffer(new PoseStack(), builder, 0, 0, FastColor.ARGB32.color(255, 255, 255, 255));
             this.floorOffset = builder.build().minY-this.getBounds().minY;
         }
         return this.floorOffset;
@@ -113,16 +114,22 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
     }
 
     @Override
-    public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
-        this.unlit.render(matrix, builder, light, overlay, r, g, b, a);
+    public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final int color) {
+        this.unlit.render(matrix, builder, light, overlay, color);
         final int emissiveLight = this.getLight(light);
-        this.lit.render(matrix, builder, emissiveLight, overlay, r, g, b, a);
-        this.litTint.render(matrix, builder, emissiveLight, overlay, r * this.red, g * this.green, b * this.blue, a);
+        this.lit.render(matrix, builder, emissiveLight, overlay, color);
+
+        this.litTint.render(matrix, builder, emissiveLight, overlay, FastColor.ARGB32.multiply(color, FastColor.ARGB32.colorFromFloat(1f, this.red, this.green, this.blue)));
     }
 
-    public void renderTranslucent(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
+    public void renderTranslucent(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final int color) {
         final float v = this.brightness;
-        this.litTintGlow.render(matrix, builder, this.getLight(light), overlay, r * this.red * v + (1.0F - v), g * this.green * v + (1.0F - v), b * this.blue * v + (1.0F - v), v * 0.15F + 0.2F);
+
+        float r = FastColor.ARGB32.red(color) / 255f;
+        float g = FastColor.ARGB32.green(color) / 255f;
+        float b = FastColor.ARGB32.blue(color) / 255f;
+
+        this.litTintGlow.render(matrix, builder, this.getLight(light), overlay, FastColor.ARGB32.colorFromFloat(v * 0.15F + 0.2F, r * this.red * v + (1.0F - v), g * this.green * v + (1.0F - v), b * this.blue * v + (1.0F - v)));
     }
 
     protected int getLight(final int packedLight) {
@@ -146,51 +153,39 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
     static class AABBVertexBuilder implements VertexConsumer {
         final AABBBuilder builder = new AABBBuilder();
 
+        AABB build() {
+            return this.builder.build();
+        }
+
         @Override
-        public VertexConsumer vertex(final double x, final double y, final double z) {
+        public VertexConsumer addVertex(float x, float y, float z) {
             this.builder.include(x, y, z);
             return this;
         }
 
         @Override
-        public VertexConsumer color(int r, int g, int b, int a) {
+        public VertexConsumer setColor(int red, int green, int blue, int alpha) {
             return this;
         }
 
         @Override
-        public VertexConsumer uv(float u, float v) {
+        public VertexConsumer setUv(float u, float v) {
             return this;
         }
 
         @Override
-        public VertexConsumer overlayCoords(int u, int v) {
+        public VertexConsumer setUv1(int u, int v) {
             return this;
         }
 
         @Override
-        public VertexConsumer uv2(int u, int v) {
+        public VertexConsumer setUv2(int u, int v) {
             return this;
         }
 
         @Override
-        public VertexConsumer normal(float x, float y, float z) {
+        public VertexConsumer setNormal(float normalX, float normalY, float normalZ) {
             return this;
-        }
-
-        @Override
-        public void endVertex() {
-        }
-
-        @Override
-        public void defaultColor(int r, int g, int b, int a) {
-        }
-
-        @Override
-        public void unsetDefaultColor() {
-        }
-
-        AABB build() {
-            return this.builder.build();
         }
     }
 

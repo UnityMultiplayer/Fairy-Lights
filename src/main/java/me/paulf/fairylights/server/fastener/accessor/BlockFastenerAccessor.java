@@ -9,9 +9,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.util.LazyOptional;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 public final class BlockFastenerAccessor implements FastenerAccessor {
     private BlockPos pos = BlockPos.ZERO;
@@ -27,21 +27,21 @@ public final class BlockFastenerAccessor implements FastenerAccessor {
     }
 
     @Override
-    public LazyOptional<Fastener<?>> get(final Level world, final boolean load) {
+    public Optional<Fastener<?>> get(final Level world, final boolean load) {
         if (load || world.isLoaded(this.pos)) {
             final BlockEntity entity = world.getBlockEntity(this.pos);
             if (entity != null) {
-                return entity.getCapability(CapabilityHandler.FASTENER_CAP);
+                return CapabilityHandler.FASTENER_CAP.maybeGet(entity);
             }
         }
-        return LazyOptional.empty();
+        return Optional.empty();
     }
 
     @Override
     public boolean isGone(final Level world) {
         if (world.isClientSide() || !world.isLoaded(this.pos)) return false;
         final BlockEntity entity = world.getBlockEntity(this.pos);
-        return entity == null || !entity.getCapability(CapabilityHandler.FASTENER_CAP).isPresent();
+        return entity == null || CapabilityHandler.FASTENER_CAP.maybeGet(entity).isEmpty();
     }
 
     @Override
@@ -62,11 +62,14 @@ public final class BlockFastenerAccessor implements FastenerAccessor {
 
     @Override
     public CompoundTag serialize() {
-        return NbtUtils.writeBlockPos(this.pos);
+        var tag = new CompoundTag();
+        var pos = NbtUtils.writeBlockPos(this.pos);
+        tag.put("pos", pos);
+        return tag;
     }
 
     @Override
     public void deserialize(final CompoundTag nbt) {
-        this.pos = NbtUtils.readBlockPos(nbt);
+        this.pos = NbtUtils.readBlockPos(nbt, "pos").orElseThrow();
     }
 }

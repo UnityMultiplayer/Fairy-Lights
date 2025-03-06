@@ -1,6 +1,6 @@
 package me.paulf.fairylights.server.connection;
 
-import me.paulf.fairylights.FairyLights;
+import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
 import me.paulf.fairylights.server.collision.Collidable;
 import me.paulf.fairylights.server.collision.CollidableList;
 import me.paulf.fairylights.server.collision.FeatureCollisionTree;
@@ -12,15 +12,14 @@ import me.paulf.fairylights.server.fastener.accessor.FastenerAccessor;
 import me.paulf.fairylights.server.feature.Feature;
 import me.paulf.fairylights.server.feature.FeatureType;
 import me.paulf.fairylights.server.item.ConnectionItem;
+import me.paulf.fairylights.server.item.components.FLComponents;
 import me.paulf.fairylights.server.net.serverbound.InteractionConnectionMessage;
 import me.paulf.fairylights.server.sound.FLSounds;
-import me.paulf.fairylights.util.Catenary;
-import me.paulf.fairylights.util.CubicBezier;
-import me.paulf.fairylights.util.Curve;
-import me.paulf.fairylights.util.Curve3d;
-import me.paulf.fairylights.util.NBTSerializable;
-import me.paulf.fairylights.util.Utils;
+import me.paulf.fairylights.util.*;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.sounds.SoundSource;
@@ -34,10 +33,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.Tags;
-import net.minecraftforge.items.ItemHandlerHelper;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.UUID;
 
 public abstract class Connection implements NBTSerializable {
@@ -152,9 +149,9 @@ public abstract class Connection implements NBTSerializable {
 
     public ItemStack getItemStack() {
         final ItemStack stack = new ItemStack(this.getType().getItem());
-        final CompoundTag tagCompound = this.serializeLogic();
+        final DataComponentMap tagCompound = this.serializeItem();
         if (!tagCompound.isEmpty()) {
-            stack.setTag(tagCompound);
+            stack.applyComponents(tagCompound);
         }
         return stack;
     }
@@ -187,7 +184,7 @@ public abstract class Connection implements NBTSerializable {
     }
 
     public void processClientAction(final Player player, final PlayerAction action, final Intersection intersection) {
-        FairyLights.NETWORK.sendToServer(new InteractionConnectionMessage(this, action, intersection));
+        ClientPlayNetworking.send(new InteractionConnectionMessage(this, action, intersection));
     }
 
     public void disconnect(final Player player, final Vec3 hit) {
@@ -219,7 +216,7 @@ public abstract class Connection implements NBTSerializable {
         final Item item = heldStack.getItem();
         if (item instanceof ConnectionItem && !this.matches(heldStack)) {
             return this.replace(player, hit, heldStack);
-        } else if (heldStack.is(Tags.Items.STRING)) {
+        } else if (heldStack.is(ConventionalItemTags.STRINGS)) {
             return this.slacken(hit, heldStack, 0.2F);
         } else if (heldStack.is(Items.STICK)) {
             return this.slacken(hit, heldStack, -0.2F);
@@ -229,7 +226,7 @@ public abstract class Connection implements NBTSerializable {
 
     public boolean matches(final ItemStack stack) {
         if (this.getType().getItem().equals(stack.getItem())) {
-            final CompoundTag tag = stack.getTag();
+            final CompoundTag tag = stack.get(FLComponents.CONNECTION_DATA);
             return tag == null || Utils.impliesNbt(this.serializeLogic(), tag);
         }
         return false;
@@ -242,9 +239,8 @@ public abstract class Connection implements NBTSerializable {
             if (this.shouldDrop()) {
                 ItemHandlerHelper.giveItemToPlayer(player, this.getItemStack());
             }
-            final CompoundTag data = heldStack.getTag();
             final ConnectionType<? extends Connection> type = ((ConnectionItem) heldStack.getItem()).getConnectionType();
-            final Connection conn = this.fastener.connect(this.world, dest, type, data == null ? new CompoundTag() : data, true);
+            final Connection conn = this.fastener.connect(this.world, dest, type, heldStack.getComponents(), true);
             conn.slack = this.slack;
             conn.onConnect(player.level(), player, heldStack);
             heldStack.shrink(1);
@@ -379,10 +375,10 @@ public abstract class Connection implements NBTSerializable {
         collision.add(FeatureCollisionTree.build(CORD_FEATURE, i -> Segment.INSTANCE, i -> bounds[i], 1, bounds.length - 2));
     }
 
-    public void deserialize(final Fastener<?> destination, final CompoundTag compound, final boolean drop) {
+    public void deserialize(final Fastener<?> destination, final DataComponentMap components, final boolean drop) {
         this.destination = destination.createAccessor();
         this.drop = drop;
-        this.deserializeLogic(compound);
+        this.deserializeLogic(components);
     }
 
     @Override
@@ -408,7 +404,12 @@ public abstract class Connection implements NBTSerializable {
         return new CompoundTag();
     }
 
+    public DataComponentMap serializeItem() {
+        return DataComponentMap.EMPTY;
+    }
+
     public void deserializeLogic(final CompoundTag compound) {}
+    public void deserializeLogic(final DataComponentMap components) {}
 
     static class Segment implements Feature {
         static final Segment INSTANCE = new Segment();

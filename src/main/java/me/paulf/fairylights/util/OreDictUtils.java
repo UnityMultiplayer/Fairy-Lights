@@ -2,15 +2,14 @@ package me.paulf.fairylights.util;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
+import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.core.Holder;
-import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.Tags;
 
 public final class OreDictUtils {
     private OreDictUtils() {}
@@ -20,7 +19,7 @@ public final class OreDictUtils {
             if (stack.getItem() instanceof DyeItem) {
                 return true;
             }
-            return stack.is(Tags.Items.DYES);
+            return stack.is(ConventionalItemTags.DYES);
         }
         return false;
     }
@@ -58,22 +57,22 @@ public final class OreDictUtils {
     }
 
     private enum Dye {
-        WHITE(Tags.Items.DYES_WHITE, DyeColor.WHITE),
-        ORANGE(Tags.Items.DYES_ORANGE, DyeColor.ORANGE),
-        MAGENTA(Tags.Items.DYES_MAGENTA, DyeColor.MAGENTA),
-        LIGHT_BLUE(Tags.Items.DYES_LIGHT_BLUE, DyeColor.LIGHT_BLUE),
-        YELLOW(Tags.Items.DYES_YELLOW, DyeColor.YELLOW),
-        LIME(Tags.Items.DYES_LIME, DyeColor.LIME),
-        PINK(Tags.Items.DYES_PINK, DyeColor.PINK),
-        GRAY(Tags.Items.DYES_GRAY, DyeColor.GRAY),
-        LIGHT_GRAY(Tags.Items.DYES_LIGHT_GRAY, DyeColor.LIGHT_GRAY),
-        CYAN(Tags.Items.DYES_CYAN, DyeColor.CYAN),
-        PURPLE(Tags.Items.DYES_PURPLE, DyeColor.PURPLE),
-        BLUE(Tags.Items.DYES_BLUE, DyeColor.BLUE),
-        BROWN(Tags.Items.DYES_BROWN, DyeColor.BROWN),
-        GREEN(Tags.Items.DYES_GREEN, DyeColor.GREEN),
-        RED(Tags.Items.DYES_RED, DyeColor.RED),
-        BLACK(Tags.Items.DYES_BLACK, DyeColor.BLACK);
+        WHITE(ConventionalItemTags.WHITE_DYES, DyeColor.WHITE),
+        ORANGE(ConventionalItemTags.ORANGE_DYES, DyeColor.ORANGE),
+        MAGENTA(ConventionalItemTags.MAGENTA_DYES, DyeColor.MAGENTA),
+        LIGHT_BLUE(ConventionalItemTags.LIGHT_BLUE_DYES, DyeColor.LIGHT_BLUE),
+        YELLOW(ConventionalItemTags.YELLOW_DYES, DyeColor.YELLOW),
+        LIME(ConventionalItemTags.LIGHT_BLUE_DYES, DyeColor.LIME),
+        PINK(ConventionalItemTags.PINK_DYES, DyeColor.PINK),
+        GRAY(ConventionalItemTags.GRAY_DYES, DyeColor.GRAY),
+        LIGHT_GRAY(ConventionalItemTags.LIGHT_GRAY_DYES, DyeColor.LIGHT_GRAY),
+        CYAN(ConventionalItemTags.CYAN_DYES, DyeColor.CYAN),
+        PURPLE(ConventionalItemTags.PURPLE_DYES, DyeColor.PURPLE),
+        BLUE(ConventionalItemTags.BLUE_DYES, DyeColor.BLUE),
+        BROWN(ConventionalItemTags.BROWN_DYES, DyeColor.BROWN),
+        GREEN(ConventionalItemTags.GREEN_DYES, DyeColor.GREEN),
+        RED(ConventionalItemTags.RED_DYES, DyeColor.RED),
+        BLACK(ConventionalItemTags.BLACK_DYES, DyeColor.BLACK);
 
         private final TagKey<Item> name;
 

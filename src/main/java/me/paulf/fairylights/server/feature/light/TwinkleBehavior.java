@@ -1,8 +1,8 @@
 package me.paulf.fairylights.server.feature.light;
 
+import me.paulf.fairylights.server.item.components.FLComponents;
 import me.paulf.fairylights.util.CubicBezier;
 import me.paulf.fairylights.util.FLMth;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -38,7 +38,6 @@ public class TwinkleBehavior implements BrightnessLightBehavior {
     }
 
     public static boolean exists(final ItemStack stack) {
-        final CompoundTag tag = stack.getTag();
-        return tag != null && tag.getBoolean("twinkle");
+        return stack.has(FLComponents.TWINKLES) && stack.get(FLComponents.TWINKLES);
     }
 }

@@ -17,6 +17,7 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.util.FastColor;
 
 import java.util.function.Function;
 
@@ -50,7 +51,7 @@ public abstract class ConnectionRenderer<C extends Connection> {
                 matrix.mulPose(Axis.YP.rotation(FLMth.PI / 2.0F - it.getYaw()));
                 matrix.mulPose(Axis.XP.rotation(-it.getPitch()));
                 matrix.scale(1.0F + this.wireInflate, 1.0F, it.getLength() * 16.0F);
-                this.model.renderToBuffer(matrix, buf, packedLight, packedOverlay, r, g, b, 1.0F);
+                this.model.renderToBuffer(matrix, buf, packedLight, packedOverlay, FastColor.ARGB32.colorFromFloat(1f, r, g, b));
                 matrix.popPose();
                 this.renderSegment(conn, it, delta, matrix, packedLight, source, packedOverlay);
             }
@@ -75,8 +76,8 @@ public abstract class ConnectionRenderer<C extends Connection> {
         }
 
         @Override
-        public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
-            this.root.render(matrix, builder, light, overlay, r, g, b, a);
+        public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final int color) {
+            this.root.render(matrix, builder, light, overlay, color);
         }
 
         public static LayerDefinition createLayer(final int u, final int v, final int size) {

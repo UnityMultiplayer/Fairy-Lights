@@ -1,8 +1,18 @@
 package me.paulf.fairylights.util.styledstring;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.ChatFormatting;
 
 public final class Style implements Comparable<Style> {
+    public static final Codec<Style> CODEC = RecordCodecBuilder.create(instance ->
+        instance.group(
+            Codec.INT.fieldOf("packed")
+                .forGetter(Style::packed)
+        )
+            .apply(instance, Style::new)
+    );
+
     private static final int COLOR_MASK = 0xF;
 
     private static final int OBFUSCATED_MASK = 0x10;

@@ -26,7 +26,7 @@ public final class FastenerBlockEntityRenderer implements BlockEntityRenderer<Fa
 
     @Override
     public void render(final FastenerBlockEntity fastener, final float delta, final PoseStack matrix, final MultiBufferSource bufferSource, final int packedLight, final int packedOverlay) {
-        fastener.getCapability(CapabilityHandler.FASTENER_CAP).ifPresent(f -> {
+        CapabilityHandler.FASTENER_CAP.maybeGet(fastener).ifPresent(f -> {
             //this.bindTexture(FastenerRenderer.TEXTURE);
             matrix.pushPose();
             final Vec3 offset = fastener.getOffset();

@@ -1,25 +1,26 @@
 package me.paulf.fairylights.server.connection;
 
-import me.paulf.fairylights.FairyLights;
 import me.paulf.fairylights.client.gui.EditLetteredConnectionScreen;
 import me.paulf.fairylights.server.collision.Intersection;
 import me.paulf.fairylights.server.fastener.Fastener;
 import me.paulf.fairylights.server.feature.Letter;
+import me.paulf.fairylights.server.item.components.FLComponents;
 import me.paulf.fairylights.server.net.clientbound.OpenEditLetteredConnectionScreenMessage;
 import me.paulf.fairylights.util.Catenary;
 import me.paulf.fairylights.util.Curve;
 import me.paulf.fairylights.util.styledstring.StyledString;
 import me.paulf.fairylights.util.styledstring.StylingPresence;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.network.PacketDistributor;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -67,7 +68,7 @@ public final class LetterBuntingConnection extends Connection implements Lettere
     @Override
     public void onConnect(final Level world, final Player user, final ItemStack heldStack) {
         if (this.text.isEmpty()) {
-            FairyLights.NETWORK.send(PacketDistributor.PLAYER.with(() -> (ServerPlayer) user), new OpenEditLetteredConnectionScreenMessage<>(this));
+            ServerPlayNetworking.send((ServerPlayer) user, new OpenEditLetteredConnectionScreenMessage<>(this));
         }
     }
 
@@ -189,7 +190,7 @@ public final class LetterBuntingConnection extends Connection implements Lettere
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public Screen createTextGUI() {
         return new EditLetteredConnectionScreen<>(this);
     }
@@ -202,8 +203,24 @@ public final class LetterBuntingConnection extends Connection implements Lettere
     }
 
     @Override
+    public DataComponentMap serializeItem() {
+        return DataComponentMap.composite(
+            super.serializeItem(),
+            DataComponentMap.builder()
+                .set(FLComponents.STYLED_STRING, this.text)
+                .build()
+        );
+    }
+
+    @Override
     public void deserializeLogic(final CompoundTag compound) {
         super.deserializeLogic(compound);
         this.text = StyledString.deserialize(compound.getCompound("text"));
+    }
+
+    @Override
+    public void deserializeLogic(DataComponentMap components) {
+        super.deserializeLogic(components);
+        this.text = components.getOrDefault(FLComponents.STYLED_STRING, new StyledString());
     }
 }

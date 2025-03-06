@@ -1,21 +1,18 @@
 package me.paulf.fairylights.data;
 
-import com.google.gson.JsonObject;
+import io.netty.buffer.Unpooled;
 import me.paulf.fairylights.FairyLights;
-import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.AdvancementRewards;
-import net.minecraft.advancements.CriterionTriggerInstance;
-import net.minecraft.advancements.RequirementsStrategy;
-import net.minecraft.advancements.critereon.ContextAwarePredicate;
-import net.minecraft.advancements.critereon.EntityPredicate;
+import me.paulf.fairylights.mixin.fabric.AdvancementBuilderAccessor;
+import net.minecraft.advancements.*;
 import net.minecraft.advancements.critereon.RecipeUnlockedTrigger;
-import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeOutput;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 
 import java.util.Objects;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.Optional;
 
 public class GenericRecipeBuilder {
     private final RecipeSerializer<?> serializer;
@@ -26,70 +23,35 @@ public class GenericRecipeBuilder {
         this.serializer = Objects.requireNonNull(serializer, "serializer");
     }
 
-    public GenericRecipeBuilder unlockedBy(final String name, final CriterionTriggerInstance criterion) {
+    public GenericRecipeBuilder unlockedBy(final String name, final Criterion<?> criterion) {
         this.advancementBuilder.addCriterion(name, criterion);
         return this;
     }
 
-    public void build(final Consumer<FinishedRecipe> consumer, final ResourceLocation id) {
-        final Supplier<JsonObject> advancementBuilder;
+    public void build(final RecipeOutput consumer, final ResourceLocation id) {
+        final AdvancementHolder advancementHolder;
         final ResourceLocation advancementId;
-        if (this.advancementBuilder.getCriteria().isEmpty()) {
-            advancementBuilder = () -> null;
-            advancementId = new ResourceLocation("");
+        if (((AdvancementBuilderAccessor) this.advancementBuilder).getCriteria().build().isEmpty()) {
+            advancementHolder = null;
         } else {
-            advancementBuilder = this.advancementBuilder.parent(new ResourceLocation("recipes/root"))
-                .addCriterion("has_the_recipe", new RecipeUnlockedTrigger.TriggerInstance(ContextAwarePredicate.ANY, id))
+            advancementId = ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "recipes/" + FairyLights.ID + "/" + id.getPath());
+            advancementHolder = consumer.advancement()
+                .parent(ResourceLocation.withDefaultNamespace("recipes/root"))
+                .addCriterion("has_the_recipe", CriteriaTriggers.RECIPE_UNLOCKED.createCriterion(new RecipeUnlockedTrigger.TriggerInstance(Optional.empty(), id)))
                 .rewards(AdvancementRewards.Builder.recipe(id))
-                .requirements(RequirementsStrategy.OR)
-                ::serializeToJson;
-            advancementId = new ResourceLocation(id.getNamespace(), "recipes/" + FairyLights.ID + "/" + id.getPath());
+                .requirements(AdvancementRequirements.Strategy.OR)
+                .build(advancementId);
         }
-        consumer.accept(new Result(this.serializer, id, advancementBuilder, advancementId));
+
+        // this is a dumb workaround but it works idc
+        var buf = new RegistryFriendlyByteBuf(Unpooled.buffer(), null);
+        buf.writeEnum(CraftingBookCategory.MISC);
+        buf.resetReaderIndex();
+
+        consumer.accept(id, this.serializer.streamCodec().decode(buf), advancementHolder);
     }
 
     public static GenericRecipeBuilder customRecipe(final RecipeSerializer<?> serializer) {
         return new GenericRecipeBuilder(serializer);
-    }
-
-    static class Result implements FinishedRecipe {
-        final RecipeSerializer<?> serializer;
-
-        final ResourceLocation id;
-
-        final Supplier<JsonObject> advancementJson;
-
-        final ResourceLocation advancementId;
-
-        public Result(final RecipeSerializer<?> serializer, final ResourceLocation id, final Supplier<JsonObject> advancementJson, final ResourceLocation advancementId) {
-            this.serializer = serializer;
-            this.id = id;
-            this.advancementJson = advancementJson;
-            this.advancementId = advancementId;
-        }
-
-        @Override
-        public void serializeRecipeData(final JsonObject json) {
-        }
-
-        @Override
-        public RecipeSerializer<?> getType() {
-            return this.serializer;
-        }
-
-        @Override
-        public ResourceLocation getId() {
-            return this.id;
-        }
-
-        @Override
-        public JsonObject serializeAdvancement() {
-            return this.advancementJson.get();
-        }
-
-        @Override
-        public ResourceLocation getAdvancementId() {
-            return this.advancementId;
-        }
     }
 }

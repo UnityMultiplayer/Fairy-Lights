@@ -2,16 +2,14 @@ package me.paulf.fairylights.server.fastener;
 
 import com.google.common.collect.ImmutableList;
 import me.paulf.fairylights.FairyLights;
-import me.paulf.fairylights.server.capability.CapabilityHandler;
 import me.paulf.fairylights.server.connection.Connection;
 import me.paulf.fairylights.server.connection.ConnectionType;
 import me.paulf.fairylights.server.fastener.accessor.FastenerAccessor;
 import me.paulf.fairylights.util.AABBBuilder;
-import me.paulf.fairylights.util.Catenary;
 import me.paulf.fairylights.util.Curve;
 import me.paulf.fairylights.util.RegistryObjects;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -20,28 +18,21 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.LazyOptional;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.UUID;
 
 public abstract class AbstractFastener<F extends FastenerAccessor> implements Fastener<F> {
+    public static final AABB INFINITE_EXTENT_AABB = new AABB(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+
     private final Map<UUID, Connection> outgoing = new HashMap<>();
 
     private final Map<UUID, Incoming> incoming = new HashMap<>();
 
-    protected AABB bounds = BlockEntity.INFINITE_EXTENT_AABB;
+    protected AABB bounds = INFINITE_EXTENT_AABB;
 
     @Nullable
     private Level world;
@@ -233,17 +224,17 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
     }
 
     @Override
-    public Connection connect(final Level world, final Fastener<?> destination, final ConnectionType<?> type, final CompoundTag compound, final boolean drop) {
+    public Connection connect(final Level world, final Fastener<?> destination, final ConnectionType<?> type, final DataComponentMap components, final boolean drop) {
         final UUID uuid = Mth.createInsecureUUID();
-        final Connection connection = this.createOutgoingConnection(world, uuid, destination, type, compound, drop);
+        final Connection connection = this.createOutgoingConnection(world, uuid, destination, type, components, drop);
         destination.createIncomingConnection(world, uuid, this, type);
         return connection;
     }
 
     @Override
-    public Connection createOutgoingConnection(final Level world, final UUID uuid, final Fastener<?> destination, final ConnectionType<?> type, final CompoundTag compound, final boolean drop) {
+    public Connection createOutgoingConnection(final Level world, final UUID uuid, final Fastener<?> destination, final ConnectionType<?> type, final DataComponentMap components, final boolean drop) {
         final Connection c = type.create(world, this, uuid);
-        c.deserialize(destination, compound, drop);
+        c.deserialize(destination, components, drop);
         this.outgoing.put(uuid, c);
         this.setDirty();
         return c;
@@ -264,7 +255,7 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
             final Connection connection = connectionEntry.getValue();
             final CompoundTag connectionCompound = new CompoundTag();
             connectionCompound.put("connection", connection.serialize());
-            connectionCompound.putString("type", RegistryObjects.getName(FairyLights.CONNECTION_TYPES.get(), connection.getType()).toString());
+            connectionCompound.putString("type", RegistryObjects.getName(FairyLights.CONNECTION_TYPES, connection.getType()).toString());
             connectionCompound.putUUID("uuid", uuid);
             outgoing.add(connectionCompound);
         }
@@ -297,7 +288,7 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
                 final Connection connection = this.outgoing.get(uuid);
                 connection.deserialize(connectionCompound.getCompound("connection"));
             } else {
-                final ConnectionType<?> type = FairyLights.CONNECTION_TYPES.get().getValue(ResourceLocation.tryParse(connectionCompound.getString("type")));
+                final ConnectionType<?> type = FairyLights.CONNECTION_TYPES.get(ResourceLocation.tryParse(connectionCompound.getString("type")));
                 if (type != null) {
                     final Connection connection = type.create(this.world, this, uuid);
                     connection.deserialize(connectionCompound.getCompound("connection"));
@@ -322,13 +313,6 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
             this.incoming.put(uuid, new Incoming(fastener, uuid));
         }
         this.setDirty();
-    }
-
-    private final LazyOptional<Fastener<?>> lazyOptional = LazyOptional.of(() -> this);
-
-    @Override
-    public <T> LazyOptional<T> getCapability(final Capability<T> capability, final Direction facing) {
-        return capability == CapabilityHandler.FASTENER_CAP ? this.lazyOptional.cast() : LazyOptional.empty();
     }
 
     static class Incoming {

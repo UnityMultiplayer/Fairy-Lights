@@ -1,25 +1,24 @@
 package me.paulf.fairylights.server.item.crafting;
 
 import me.paulf.fairylights.server.item.DyeableItem;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 
 public class CopyColorRecipe extends CustomRecipe {
-    public CopyColorRecipe(final ResourceLocation id, CraftingBookCategory category) {
-        super(id, category);
+    public CopyColorRecipe(CraftingBookCategory category) {
+        super(category);
     }
 
     @Override
-    public boolean matches(final CraftingContainer inv, final Level world) {
+    public boolean matches(final CraftingInput inv, final Level world) {
         int count = 0;
-        for (int i = 0; i < inv.getContainerSize(); i++) {
+        for (int i = 0; i < inv.size(); i++) {
             final ItemStack stack = inv.getItem(i);
             if (!stack.isEmpty() && (!stack.is(FLCraftingRecipes.DYEABLE) || count++ >= 2)) {
                 return false;
@@ -29,9 +28,9 @@ public class CopyColorRecipe extends CustomRecipe {
     }
 
     @Override
-    public ItemStack assemble(final CraftingContainer inv, final RegistryAccess registryAccess) {
+    public ItemStack assemble(CraftingInput inv, HolderLookup.Provider registries) {
         ItemStack original = ItemStack.EMPTY;
-        for (int i = 0; i < inv.getContainerSize(); i++) {
+        for (int i = 0; i < inv.size(); i++) {
             final ItemStack stack = inv.getItem(i);
             if (!stack.isEmpty()) {
                 if (stack.is(FLCraftingRecipes.DYEABLE)) {
@@ -52,13 +51,13 @@ public class CopyColorRecipe extends CustomRecipe {
     }
 
     @Override
-    public NonNullList<ItemStack> getRemainingItems(final CraftingContainer inv) {
+    public NonNullList<ItemStack> getRemainingItems(final CraftingInput inv) {
         ItemStack original = ItemStack.EMPTY;
-        final NonNullList<ItemStack> remaining = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
+        final NonNullList<ItemStack> remaining = NonNullList.withSize(inv.size(), ItemStack.EMPTY);
         for (int i = 0; i < remaining.size(); i++) {
             final ItemStack stack = inv.getItem(i);
-            if (stack.hasCraftingRemainingItem()) {
-                remaining.set(i, stack.getCraftingRemainingItem());
+            if (stack.getItem().hasCraftingRemainingItem()) {
+                remaining.set(i, stack.getItem().getCraftingRemainingItem().getDefaultInstance());
             } else if (original.isEmpty() && !stack.isEmpty() && stack.is(FLCraftingRecipes.DYEABLE)) {
                 final ItemStack rem = stack.copy();
                 rem.setCount(1);

@@ -7,6 +7,8 @@ import com.mojang.serialization.JsonOps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import me.paulf.fairylights.FairyLights;
+import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -16,7 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 
-public class JingleManager extends SimpleJsonResourceReloadListener {
+public class JingleManager extends SimpleJsonResourceReloadListener implements IdentifiableResourceReloadListener {
     private static final Logger LOGGER = LogManager.getLogger();
 
     private static final Gson GSON = new GsonBuilder().create();
@@ -40,7 +42,7 @@ public class JingleManager extends SimpleJsonResourceReloadListener {
             final String path = file.getPath();
             final int sl = path.indexOf('/');
             final String library = path.substring(0, Math.max(0, sl));
-            final ResourceLocation name = new ResourceLocation(file.getNamespace(), path.substring(sl + 1));
+            final ResourceLocation name = ResourceLocation.fromNamespaceAndPath(file.getNamespace(), path.substring(sl + 1));
             Jingle.CODEC.parse(JsonOps.INSTANCE, json)
                 .resultOrPartial(error -> LOGGER.warn("Parsing error loading jingle {}: {}", file, error))
                 .ifPresent(jingle -> builders.computeIfAbsent(library, l -> new JingleLibrary.Builder()).add(name, jingle));
@@ -48,5 +50,10 @@ public class JingleManager extends SimpleJsonResourceReloadListener {
         final Object2ObjectMap<String, JingleLibrary> libraries = new Object2ObjectOpenHashMap<>(builders.size());
         Object2ObjectMaps.fastForEach(builders, e -> libraries.put(e.getKey(), e.getValue().build()));
         this.libraries = libraries;
+    }
+
+    @Override
+    public ResourceLocation getFabricId() {
+        return ResourceLocation.fromNamespaceAndPath(FairyLights.ID, "jingles");
     }
 }

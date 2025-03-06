@@ -3,16 +3,14 @@ package me.paulf.fairylights.util.crafting.ingredient;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparators;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -30,8 +28,8 @@ public class LazyTagIngredient extends Ingredient {
     }
 
     @Override
-    public boolean test(@Nullable final ItemStack stack) {
-        return stack != null && stack.is(this.tag);
+    public boolean requiresTesting() {
+        return false;
     }
 
     @Override
@@ -46,8 +44,8 @@ public class LazyTagIngredient extends Ingredient {
     }
 
     @Override
-    public boolean isEmpty() {
-        return !BuiltInRegistries.ITEM.getTagOrEmpty(this.tag).iterator().hasNext();
+    public boolean test(@Nullable final ItemStack stack) {
+        return stack != null && stack.is(this.tag);
     }
 
     public static LazyTagIngredient of(final TagKey<Item> tag) {

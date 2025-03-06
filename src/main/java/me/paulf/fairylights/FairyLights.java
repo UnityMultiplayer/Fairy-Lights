@@ -9,8 +9,8 @@ import me.paulf.fairylights.server.connection.ConnectionTypes;
 import me.paulf.fairylights.server.creativetabs.FairyLightsItemGroup;
 import me.paulf.fairylights.server.entity.FLEntities;
 import me.paulf.fairylights.server.item.FLItems;
+import me.paulf.fairylights.server.item.components.FLComponents;
 import me.paulf.fairylights.server.item.crafting.FLCraftingRecipes;
-import me.paulf.fairylights.server.net.NetBuilder;
 import me.paulf.fairylights.server.net.clientbound.JingleMessage;
 import me.paulf.fairylights.server.net.clientbound.OpenEditLetteredConnectionScreenMessage;
 import me.paulf.fairylights.server.net.clientbound.UpdateEntityFastenerMessage;
@@ -20,68 +20,64 @@ import me.paulf.fairylights.server.sound.FLSounds;
 import me.paulf.fairylights.server.string.StringType;
 import me.paulf.fairylights.server.string.StringTypes;
 import me.paulf.fairylights.util.CalendarEvent;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
+import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.network.simple.SimpleChannel;
-import net.minecraftforge.registries.IForgeRegistry;
-import net.minecraftforge.registries.NewRegistryEvent;
-import net.minecraftforge.registries.RegistryBuilder;
 
 import java.time.Month;
-import java.util.function.Supplier;
 
-@Mod(FairyLights.ID)
-public final class FairyLights {
+public final class FairyLights implements ModInitializer {
     public static final String ID = "fairylights";
 
-    public static final ResourceLocation STRING_TYPE = new ResourceLocation(ID, "string_type");
+    public static final ResourceLocation STRING_TYPE = ResourceLocation.fromNamespaceAndPath(ID, "string_type");
 
-    public static final ResourceLocation CONNECTION_TYPE = new ResourceLocation(ID, "connection_type");
-
-    @SuppressWarnings("Convert2MethodRef")
-    public static final SimpleChannel NETWORK = new NetBuilder(new ResourceLocation(ID, "net"))
-        .version(1).optionalServer().requiredClient()
-        .clientbound(JingleMessage::new).consumer(() -> new JingleMessage.Handler())
-        .clientbound(UpdateEntityFastenerMessage::new).consumer(() -> new UpdateEntityFastenerMessage.Handler())
-        .clientbound(OpenEditLetteredConnectionScreenMessage::new).consumer(() -> new OpenEditLetteredConnectionScreenMessage.Handler())
-        .serverbound(InteractionConnectionMessage::new).consumer(() -> new InteractionConnectionMessage.Handler())
-        .serverbound(EditLetteredConnectionMessage::new).consumer(() -> new EditLetteredConnectionMessage.Handler())
-        .build();
+    public static final ResourceLocation CONNECTION_TYPE = ResourceLocation.fromNamespaceAndPath(ID, "connection_type");
 
     public static final CalendarEvent CHRISTMAS = new CalendarEvent(Month.DECEMBER, 24, 26);
 
     public static final CalendarEvent HALLOWEEN = new CalendarEvent(Month.OCTOBER, 31, 31);
 
-    public static Supplier<IForgeRegistry<ConnectionType<?>>> CONNECTION_TYPES;
+    public static Registry<ConnectionType<?>> CONNECTION_TYPES = FabricRegistryBuilder.<ConnectionType<?>>createSimple(ResourceKey.createRegistryKey(CONNECTION_TYPE))
+            .attribute(RegistryAttribute.MODDED)
+            .buildAndRegister();
 
-    public static Supplier<IForgeRegistry<StringType>> STRING_TYPES;
+    public static Registry<StringType> STRING_TYPES = FabricRegistryBuilder.<StringType>createDefaulted(ResourceKey.createRegistryKey(STRING_TYPE), ResourceLocation.fromNamespaceAndPath(ID, "black_string"))
+            .attribute(RegistryAttribute.MODDED)
+            .buildAndRegister();
 
-    public FairyLights() {
-        final IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
-        bus.addListener((NewRegistryEvent event) -> {
-            CONNECTION_TYPES = event.create(new RegistryBuilder<ConnectionType<?>>()
-                .setName(CONNECTION_TYPE)
-                .disableSaving());
-            STRING_TYPES = event.create(new RegistryBuilder<StringType>()
-                .setName(STRING_TYPE)
-                .setDefaultKey(new ResourceLocation(ID, "black_string"))
-                .disableSaving());
-        });
-        FLSounds.REG.register(bus);
-        FLBlocks.REG.register(bus);
-        FLEntities.REG.register(bus);
-        FLItems.REG.register(bus);
-        FLBlockEntities.REG.register(bus);
-        FLCraftingRecipes.REG.register(bus);
-        ConnectionTypes.REG.register(bus);
-        StringTypes.REG.register(bus);
-        final ServerProxy proxy = DistExecutor.safeRunForDist(() -> ClientProxy::new, () -> ServerProxy::new);
-        proxy.init(bus);
-        FairyLightsItemGroup.TAB_REG.register(FMLJavaModLoadingContext.get().getModEventBus());
+    public void onInitialize() {
+        PayloadTypeRegistry.playC2S().register(InteractionConnectionMessage.TYPE, InteractionConnectionMessage.CODEC);
+        PayloadTypeRegistry.playC2S().register(EditLetteredConnectionMessage.TYPE, EditLetteredConnectionMessage.CODEC);
+        PayloadTypeRegistry.playS2C().register(JingleMessage.TYPE, JingleMessage.CODEC);
+        PayloadTypeRegistry.playS2C().register(UpdateEntityFastenerMessage.TYPE, UpdateEntityFastenerMessage.CODEC);
+        PayloadTypeRegistry.playS2C().register(OpenEditLetteredConnectionScreenMessage.TYPE, OpenEditLetteredConnectionScreenMessage.CODEC);
 
+        ServerPlayNetworking.registerGlobalReceiver(InteractionConnectionMessage.TYPE, new InteractionConnectionMessage.Handler());
+        ServerPlayNetworking.registerGlobalReceiver(EditLetteredConnectionMessage.TYPE, new EditLetteredConnectionMessage.Handler());
+
+        FLComponents.init();
+        FLSounds.REG.register();
+        FLBlocks.REG.register();
+        FLEntities.REG.register();
+        FLItems.REG.register();
+        FLBlockEntities.REG.register();
+        FLCraftingRecipes.REG.register();
+        ConnectionTypes.REG.register();
+        StringTypes.REG.register();
+
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+            (new ClientProxy()).init();
+        } else {
+            (new ServerProxy()).init();
+        }
+        FairyLightsItemGroup.TAB_REG.register();
     }
 
 

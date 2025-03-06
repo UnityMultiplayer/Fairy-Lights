@@ -1,5 +1,6 @@
 package me.paulf.fairylights.server.block.entity;
 
+import io.github.fabricators_of_create.porting_lib.block.CustomUpdateTagHandlingBlockEntity;
 import me.paulf.fairylights.server.block.LightBlock;
 import me.paulf.fairylights.server.feature.light.Light;
 import me.paulf.fairylights.server.item.LightVariant;
@@ -8,10 +9,10 @@ import me.paulf.fairylights.server.sound.FLSounds;
 import me.paulf.fairylights.util.FLMth;
 import me.paulf.fairylights.util.matrix.MatrixStack;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -21,7 +22,7 @@ import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
-public class LightBlockEntity extends BlockEntity {
+public class LightBlockEntity extends BlockEntity implements CustomUpdateTagHandlingBlockEntity {
     private Light<?> light;
 
     private boolean on = true;
@@ -37,6 +38,7 @@ public class LightBlockEntity extends BlockEntity {
 
     public void setItemStack(final ItemStack stack) {
         this.light = new Light<>(0, Vec3.ZERO, 0.0F, 0.0F, stack, LightVariant.get(stack).orElse(SimpleLightVariant.FAIRY_LIGHT), 0.0F);
+        this.setComponents(stack.getComponents());
         this.setChanged();
     }
 
@@ -46,7 +48,7 @@ public class LightBlockEntity extends BlockEntity {
         this.setChanged();
     }
 
-    public void interact(final Level world, final BlockPos pos, final BlockState state, final Player player, final InteractionHand hand, final BlockHitResult hit) {
+    public void interact(final Level world, final BlockPos pos, final BlockState state, final Player player, final BlockHitResult hit) {
         this.setOn(!this.on);
         world.setBlockAndUpdate(pos, state.setValue(LightBlock.LIT, this.on));
         final SoundEvent lightSnd;
@@ -88,21 +90,22 @@ public class LightBlockEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
-        return this.saveWithoutMetadata();
+    public CompoundTag getUpdateTag(HolderLookup.Provider providers) {
+        return this.saveWithoutMetadata(providers);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag compound) {
-        super.saveAdditional(compound);
-        compound.put("item", this.light.getItem().save(new CompoundTag()));
+    protected void saveAdditional(CompoundTag compound, HolderLookup.Provider providers) {
+        super.saveAdditional(compound, providers);
+        compound.put("item", this.light.getItem().save(providers));
         compound.putBoolean("on", this.on);
     }
 
     @Override
-    public void load(CompoundTag compound) {
-        super.load(compound);
-        this.setItemStack(ItemStack.of(compound.getCompound("item")));
+    public void loadAdditional(CompoundTag compound, HolderLookup.Provider providers) {
+        super.loadAdditional(compound, providers);
+        if (compound.contains("item"))
+            this.setItemStack(ItemStack.parse(providers, compound.get("item")).orElse(ItemStack.EMPTY));
         this.setOn(compound.getBoolean("on"));
     }
 }

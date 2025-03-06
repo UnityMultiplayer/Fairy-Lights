@@ -6,12 +6,7 @@ import com.mojang.math.Axis;
 import me.paulf.fairylights.client.ClientProxy;
 import me.paulf.fairylights.client.FLModelLayers;
 import me.paulf.fairylights.client.model.light.BowModel;
-import me.paulf.fairylights.server.connection.Connection;
-import me.paulf.fairylights.server.connection.GarlandTinselConnection;
-import me.paulf.fairylights.server.connection.GarlandVineConnection;
-import me.paulf.fairylights.server.connection.HangingLightsConnection;
-import me.paulf.fairylights.server.connection.LetterBuntingConnection;
-import me.paulf.fairylights.server.connection.PennantBuntingConnection;
+import me.paulf.fairylights.server.connection.*;
 import me.paulf.fairylights.server.fastener.Fastener;
 import me.paulf.fairylights.server.fastener.FenceFastener;
 import net.minecraft.client.Minecraft;
@@ -20,21 +15,17 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.ItemTransforms;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.client.model.data.ModelData;
-import net.minecraftforge.common.Tags;
 
-import java.util.Random;
 import java.util.function.Function;
 
 public class FastenerRenderer {
@@ -74,7 +65,7 @@ public class FastenerRenderer {
                 return false;
             }
             final BlockState state = world.getBlockState(fastener.getPos());
-            if (!state.is(Tags.Blocks.FENCES)) {
+            if (!state.is(BlockTags.FENCES)) {
                 return false;
             }
             final VertexConsumer buf = ClientProxy.SOLID_TEXTURE.buffer(source, RenderType::entityCutout);
@@ -120,7 +111,7 @@ public class FastenerRenderer {
         if (offset != 0.0F) {
             matrix.translate(0.0D, 0.0D, offset);
         }
-        this.bow.renderToBuffer(matrix, buf, packedLight, packedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
+        this.bow.renderToBuffer(matrix, buf, packedLight, packedOverlay, FastColor.ARGB32.color(255, 255, 255, 255));
         matrix.popPose();
     }
 
@@ -157,13 +148,13 @@ public class FastenerRenderer {
         for (final Direction side : Direction.values()) {
             randSource.setSeed(42L);
             for (final BakedQuad quad : model.getQuads(null, side, randSource)) {
-                buf.putBulkData(lastStack, quad, r, g, b, packedLight, packedOverlay);
+                buf.putBulkData(lastStack, quad, r, g, b, 1f, packedLight, packedOverlay);
             }
         }
 
         randSource.setSeed(42L);
         for (final BakedQuad quad : model.getQuads(null, null, randSource)) {
-            buf.putBulkData(lastStack, quad, r, g, b, packedLight, packedOverlay);
+            buf.putBulkData(lastStack, quad, r, g, b, 1f, packedLight, packedOverlay);
         }
     }
 }

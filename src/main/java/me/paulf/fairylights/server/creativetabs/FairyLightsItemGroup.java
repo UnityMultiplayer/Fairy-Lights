@@ -1,20 +1,19 @@
 package me.paulf.fairylights.server.creativetabs;
 
+import dev.architectury.registry.registries.DeferredRegister;
+import dev.architectury.registry.registries.RegistrySupplier;
 import me.paulf.fairylights.FairyLights;
-import me.paulf.fairylights.server.block.FLBlocks;
-import me.paulf.fairylights.server.block.LightBlock;
-import me.paulf.fairylights.server.item.*;
+import me.paulf.fairylights.server.item.DyeableItem;
+import me.paulf.fairylights.server.item.FLItems;
+import me.paulf.fairylights.server.item.components.FLComponents;
 import me.paulf.fairylights.server.item.crafting.FLCraftingRecipes;
 import me.paulf.fairylights.util.styledstring.StyledString;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,9 +27,9 @@ public final class FairyLightsItemGroup
         super();
     }
 
-    public static final DeferredRegister<CreativeModeTab> TAB_REG = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, FairyLights.ID);
+    public static final DeferredRegister<CreativeModeTab> TAB_REG = DeferredRegister.create(FairyLights.ID, Registries.CREATIVE_MODE_TAB);
 
-    public static final RegistryObject<CreativeModeTab> GENERAL = TAB_REG.register("general", () -> new CreativeModeTab.Builder(CreativeModeTab.Row.TOP, 1)
+    public static final RegistrySupplier<CreativeModeTab> GENERAL = TAB_REG.register("general", () -> new CreativeModeTab.Builder(CreativeModeTab.Row.TOP, 1)
                                                                                                       .icon(() -> new ItemStack(FLItems.HANGING_LIGHTS.get()))
                                                                                                       .title(Component.literal("FairyLights")).displayItems((config, output) -> {
 
@@ -49,7 +48,7 @@ public final class FairyLightsItemGroup
           output.acceptAll(generateCollection(FLItems.TINSEL.get()));
 
           final ItemStack bunting = new ItemStack(FLItems.LETTER_BUNTING.get(), 1);
-          bunting.getOrCreateTag().put("text", StyledString.serialize(new StyledString()));
+          bunting.set(FLComponents.STYLED_STRING, new StyledString());
           output.accept(bunting);
           output.accept(new ItemStack(FLItems.GARLAND.get()));
 

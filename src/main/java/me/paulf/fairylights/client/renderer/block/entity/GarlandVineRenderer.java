@@ -18,6 +18,7 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.util.FastColor;
 
 import java.util.function.Function;
 
@@ -46,7 +47,7 @@ public class GarlandVineRenderer extends ConnectionRenderer<GarlandVineConnectio
             matrix.mulPose(Axis.ZP.rotationDegrees(RAND.get(index + hash) * 45.0F));
             matrix.mulPose(Axis.YP.rotationDegrees(RAND.get(index + 8 + hash) * 60.F + 90.0F));
             this.rings.setWhich(index % RING_COUNT);
-            this.rings.renderToBuffer(matrix, buf, packedLight, packedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
+            this.rings.renderToBuffer(matrix, buf, packedLight, packedOverlay, FastColor.ARGB32.color(255, 255, 255, 255));
             matrix.popPose();
         });
     }
@@ -90,8 +91,8 @@ public class GarlandVineRenderer extends ConnectionRenderer<GarlandVineConnectio
         }
 
         @Override
-        public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
-            this.roots[this.which].render(matrix, builder, light, overlay, r, g, b, a);
+        public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final int color) {
+            this.roots[this.which].render(matrix, builder, light, overlay, color);
         }
     }
 }

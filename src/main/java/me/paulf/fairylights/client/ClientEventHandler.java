@@ -15,16 +15,20 @@ import me.paulf.fairylights.server.fastener.Fastener;
 import me.paulf.fairylights.server.fastener.FastenerType;
 import me.paulf.fairylights.server.jingle.Jingle;
 import me.paulf.fairylights.util.Curve;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.PacketListener;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.PacketType;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerEntity;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -39,18 +43,24 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.client.event.RenderHighlightEvent;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Set;
 
 public final class ClientEventHandler {
     private static final float HIGHLIGHT_ALPHA = 0.4F;
+
+    public ClientEventHandler() {
+        WorldRenderEvents.BEFORE_BLOCK_OUTLINE.register((worldRenderContext, hitResult) -> {
+            if (hitResult instanceof EntityHitResult entityHitResult) {
+                drawBlockHighlight(worldRenderContext, entityHitResult);
+            }
+
+            return true;
+        });
+    }
 
     @Nullable
     public static Connection getHitConnection() {
@@ -64,7 +74,7 @@ public final class ClientEventHandler {
         return null;
     }
 
-    public void renderOverlay(final ForgeGui gui, final GuiGraphics poseStack, final float partialTick, final int screenWidth, final int screenHeight) {
+    public void renderOverlay(final Gui gui, final GuiGraphics poseStack, final float partialTick, final int screenWidth, final int screenHeight) {
         final Connection conn = getHitConnection();
         if (!(conn instanceof HangingLightsConnection)) {
             return;
@@ -128,7 +138,7 @@ public final class ClientEventHandler {
                 }
             }
         }
-        MinecraftForge.EVENT_BUS.post(event);
+        CollectFastenersEvent.EVENT.invoker().onCollectFasteners(event);
         return fasteners;
     }
 
@@ -139,7 +149,7 @@ public final class ClientEventHandler {
         }
         final Vec3 origin = viewer.getEyePosition(1);
         final Vec3 look = viewer.getLookAngle();
-        final double reach = Minecraft.getInstance().gameMode.getPickRange();
+        final double reach = Minecraft.getInstance().player.getPickRadius();
         final Vec3 end = origin.add(look.x * reach, look.y * reach, look.z * reach);
         Connection found = null;
         Intersection rayTrace = null;
@@ -167,16 +177,15 @@ public final class ClientEventHandler {
         return new HitResult(found, rayTrace);
     }
 
-    @SubscribeEvent
-    public void drawBlockHighlight(final RenderHighlightEvent.Entity event) {
-        final Entity entity = event.getTarget().getEntity();
-        final Vec3 pos = event.getCamera().getPosition();
-        final MultiBufferSource buf = event.getMultiBufferSource();
+    public void drawBlockHighlight(WorldRenderContext renderContext, EntityHitResult hitResult) {
+        final Entity entity = hitResult.getEntity();
+        final Vec3 pos = renderContext.camera().getPosition();
+        final MultiBufferSource buf = renderContext.consumers();
         if (entity instanceof FenceFastenerEntity) {
-            this.drawFenceFastenerHighlight((FenceFastenerEntity) entity, event.getPoseStack(), buf.getBuffer(RenderType.lines()), event.getPartialTick(), pos.x, pos.y, pos.z);
+            this.drawFenceFastenerHighlight((FenceFastenerEntity) entity, renderContext.matrixStack(), buf.getBuffer(RenderType.lines()), renderContext.tickCounter().getGameTimeDeltaPartialTick(true), pos.x, pos.y, pos.z);
         } else if (entity instanceof final HitConnection hit) {
             if (hit.result.intersection.getFeatureType() == Connection.CORD_FEATURE) {
-                final PoseStack matrix = event.getPoseStack();
+                final PoseStack matrix = renderContext.matrixStack();
                 matrix.pushPose();
                 final Vec3 p = hit.result.connection.getFastener().getConnectionPoint();
                 matrix.translate(p.x - pos.x, p.y - pos.y, p.z - pos.z);
@@ -184,7 +193,7 @@ public final class ClientEventHandler {
                 matrix.popPose();
             } else {
                 final AABB bb = hit.result.intersection.getHitBox().move(-pos.x, -pos.y, -pos.z).inflate(0.002D);
-                LevelRenderer.renderLineBox(event.getPoseStack(), buf.getBuffer(RenderType.lines()), bb, 0.0F, 0.0F, 0.0F, HIGHLIGHT_ALPHA);
+                LevelRenderer.renderLineBox(renderContext.matrixStack(), buf.getBuffer(RenderType.lines()), bb, 0.0F, 0.0F, 0.0F, HIGHLIGHT_ALPHA);
             }
         }
     }
@@ -252,14 +261,12 @@ public final class ClientEventHandler {
                 n.sub(this.last);
                 n.normalize();
                 n = this.matrix.last().normal().transform(n);
-                this.buf.vertex(this.matrix.last().pose(), this.last.x(), this.last.y(), this.last.z())
-                    .color(0.0F, 0.0F, 0.0F, HIGHLIGHT_ALPHA)
-                    .normal(n.x(), n.y(), n.z())
-                    .endVertex();
-                this.buf.vertex(this.matrix.last().pose(), pos.x(), pos.y(), pos.z())
-                    .color(0.0F, 0.0F, 0.0F, HIGHLIGHT_ALPHA)
-                    .normal(n.x(), n.y(), n.z())
-                    .endVertex();
+                this.buf.addVertex(this.matrix.last().pose(), this.last.x(), this.last.y(), this.last.z())
+                    .setColor(0.0F, 0.0F, 0.0F, HIGHLIGHT_ALPHA)
+                    .setNormal(n.x(), n.y(), n.z());
+                this.buf.addVertex(this.matrix.last().pose(), pos.x(), pos.y(), pos.z())
+                    .setColor(0.0F, 0.0F, 0.0F, HIGHLIGHT_ALPHA)
+                    .setNormal(n.x(), n.y(), n.z());
                 this.last = null;
             }
         }
@@ -329,12 +336,12 @@ public final class ClientEventHandler {
         }
 
         @Override
-        public ItemStack getPickedResult(net.minecraft.world.phys.HitResult target) {
+        public @Nullable ItemStack getPickResult() {
             return this.result.connection.getItemStack();
         }
 
         @Override
-        protected void defineSynchedData() {
+        protected void defineSynchedData(SynchedEntityData.Builder builder) {
         }
 
         @Override
@@ -346,16 +353,15 @@ public final class ClientEventHandler {
         }
 
         @Override
-        public Packet<ClientGamePacketListener> getAddEntityPacket() {
-            return new Packet<>() {
+        public Packet<ClientGamePacketListener> getAddEntityPacket(ServerEntity entity) {
+            return new Packet<ClientGamePacketListener>() {
                 @Override
-                public void write(final FriendlyByteBuf buf) {
-                    
+                public PacketType<? extends Packet<ClientGamePacketListener>> type() {
+                    return null;
                 }
 
                 @Override
-                public void handle(final ClientGamePacketListener p_131342_)
-                {
+                public void handle(ClientGamePacketListener handler) {
 
                 }
             };

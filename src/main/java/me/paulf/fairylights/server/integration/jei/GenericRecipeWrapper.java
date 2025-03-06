@@ -13,12 +13,14 @@ import mezz.jei.api.gui.ingredient.ICraftingGridHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.category.extensions.vanilla.crafting.ICraftingCategoryExtension;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import org.apache.logging.log4j.LogManager;
 
 import java.util.ArrayList;
@@ -30,22 +32,27 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
-    private final GenericRecipe recipe;
+public final class GenericRecipeWrapper implements ICraftingCategoryExtension<GenericRecipe> {
+    private GenericRecipe recipe;
 
-    private final List<List<ItemStack>> allInputs;
+    private List<List<ItemStack>> allInputs;
 
     // Only minimal stacks, ingredients that support multiple will only have first taken unless dictatesOutputType
-    private final List<List<ItemStack>> minimalInputStacks;
+    private List<List<ItemStack>> minimalInputStacks;
 
-    private final List<ItemStack> outputs;
+    private List<ItemStack> outputs;
 
-    private final GenericIngredient<?, ?>[] ingredientMatrix;
+    private GenericIngredient<?, ?>[] ingredientMatrix;
 
-    private final int subtypeIndex;
+    private int subtypeIndex;
 
-    public GenericRecipeWrapper(final GenericRecipe recipe) {
-        this.recipe = recipe;
+    public GenericRecipeWrapper() {
+
+    }
+
+    @Override
+    public void setRecipe(RecipeHolder<GenericRecipe> recipeHolder, IRecipeLayoutBuilder builder, ICraftingGridHelper craftingGridHelper, IFocusGroup focuses) {
+        this.recipe = recipeHolder.value();
         final List<List<ItemStack>> allInputs = new ArrayList<>();
         final List<List<ItemStack>> minimalInputStacks = new ArrayList<>();
         final RegularIngredient[] ingredients = recipe.getGenericIngredients();
@@ -116,13 +123,14 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
                 return true;
             }
         }, this.getWidth(), this.getHeight());
+        final CraftingInput input = CraftingInput.of(this.getWidth(), this.getHeight(), crafting.getItems());
         if (this.subtypeIndex == -1) {
             for (int i = 0; i < this.minimalInputStacks.size(); i++) {
                 final List<ItemStack> stacks = this.minimalInputStacks.get(i);
                 crafting.setItem(i, stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(0));
             }
-            if (this.recipe.matches(crafting, null)) {
-                outputConsumer.accept(ItemStack.EMPTY, this.recipe.assemble(crafting, null));
+            if (this.recipe.matches(input, null)) {
+                outputConsumer.accept(ItemStack.EMPTY, this.recipe.assemble(input, null));
             }
         } else {
             final List<ItemStack> dictators = this.minimalInputStacks.get(this.subtypeIndex);
@@ -136,8 +144,8 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
                         crafting.setItem(i, stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(0));
                     }
                 }
-                if (this.recipe.matches(crafting, null)) {
-                    outputConsumer.accept(subtype, this.recipe.assemble(crafting, null));
+                if (this.recipe.matches(input, null)) {
+                    outputConsumer.accept(subtype, this.recipe.assemble(input, null));
                 }
             }
         }
@@ -214,6 +222,7 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
                 return true;
             }
         }, this.getWidth(), this.getHeight());
+        final CraftingInput input = CraftingInput.of(this.getWidth(), this.getHeight(), crafting.getItems());
         for (int i = 0; i < this.allInputs.size(); i++) {
             final List<ItemStack> options = this.allInputs.get(i);
             ItemStack matched = null;
@@ -232,7 +241,7 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
                 final List<ItemStack> stacks = this.minimalInputStacks.get(n);
                 crafting.setItem(n, i == n ? matched : stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(0));
             }
-            if (this.recipe.matches(crafting, null)) {
+            if (this.recipe.matches(input, null)) {
                 final List<List<ItemStack>> inputs = new ArrayList<>(this.allInputs.size());
                 for (int n = 0; n < this.allInputs.size(); n++) {
                     final List<ItemStack> stacks = this.allInputs.get(n);
@@ -256,6 +265,7 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
                 return true;
             }
         }, this.getWidth(), this.getHeight());
+        final CraftingInput input = CraftingInput.of(this.getWidth(), getHeight(), crafting.getItems());
         int size = 1;
         for (final List<ItemStack> stack : inputs) {
             if (stack.size() > 0) {
@@ -268,14 +278,14 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
                 final List<ItemStack> stacks = inputs.get(i);
                 crafting.setItem(i, stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(n % stacks.size()));
             }
-            if (this.recipe.matches(crafting, null)) {
-                outputs.add(this.recipe.assemble(crafting, null));
+            if (this.recipe.matches(input, null)) {
+                outputs.add(this.recipe.assemble(input, null));
             } else {
                 LogManager.getLogger().debug("No recipe match for {} using inputs {}",
-                    ForgeRegistries.ITEMS.getKey(this.recipe.getOutput().getItem()),
+                    BuiltInRegistries.ITEM.getKey(this.recipe.getOutput().getItem()),
                     IntStream.range(0, crafting.getWidth() * crafting.getHeight())
                         .mapToObj(crafting::getItem)
-                        .map(s -> Objects.toString(ForgeRegistries.ITEMS.getKey(s.getItem())))
+                        .map(s -> Objects.toString(BuiltInRegistries.ITEM.getKey(s.getItem())))
                         .collect(Collectors.joining(", "))
                 );
             }

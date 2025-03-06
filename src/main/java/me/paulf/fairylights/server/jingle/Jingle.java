@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import it.unimi.dsi.fastutil.objects.ObjectLists;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,6 +21,8 @@ public final class Jingle {
         )
         .apply(builder, Jingle::new)
     );
+
+    public static final StreamCodec<FriendlyByteBuf, Jingle> STREAM_CODEC = StreamCodec.of((buf, jingle) -> jingle.write(buf), Jingle::read);
 
     private final String title;
 

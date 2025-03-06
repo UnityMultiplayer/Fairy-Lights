@@ -1,30 +1,27 @@
 package me.paulf.fairylights.client.tutorial;
 
 import com.google.common.collect.ImmutableMap;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
+import fuzs.forgeconfigapiport.fabric.api.forge.v4.ForgeModConfigEvents;
+import me.paulf.fairylights.FairyLights;
 import me.paulf.fairylights.client.FLClientConfig;
 import me.paulf.fairylights.server.item.FLItems;
 import me.paulf.fairylights.server.item.crafting.FLCraftingRecipes;
 import me.paulf.fairylights.util.LazyItemStack;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.gui.components.toasts.ToastComponent;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -38,26 +35,23 @@ public class ClippyController {
 
     private State state = new NoProgressState();
 
-    public void init(final IEventBus modBus) {
-        MinecraftForge.EVENT_BUS.addListener((final LevelEvent.Load event) -> {
-            if (event.getLevel() instanceof ClientLevel) {
-                this.reload();
-            }
+    public void init() {
+        ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register((client, world) -> {
+            this.reload();
         });
-        MinecraftForge.EVENT_BUS.addListener((final TickEvent.ClientTickEvent event) -> {
-            final Minecraft mc = Minecraft.getInstance();
-            if (event.phase == TickEvent.Phase.END && !mc.isPaused() && mc.player != null) {
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> {
+            if (!mc.isPaused() && mc.player != null) {
                 this.state.tick(mc.player, this);
             }
         });
-        modBus.<ModConfigEvent.Loading>addListener(e -> {
-            if (e.getConfig().getSpec() == FLClientConfig.SPEC && Minecraft.getInstance().player != null) {
+        ForgeModConfigEvents.loading(FairyLights.ID).register(config -> {
+            if (config.getSpec() == FLClientConfig.SPEC && Minecraft.getInstance().player != null) {
                 this.reload();
             }
         });
-        MinecraftForge.EVENT_BUS.<ClientPlayerNetworkEvent.LoggingIn>addListener(e -> {
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, mc) -> {
             this.reload();
-            this.state.tick(e.getPlayer(), this);
+            this.state.tick(mc.player, this);
         });
     }
 
@@ -122,7 +116,7 @@ public class ClippyController {
             if (!player.getInventory().contains(FLCraftingRecipes.LIGHTS) &&
                     !player.getInventory().getSelected().is(FLCraftingRecipes.LIGHTS)) {
                 controller.setState(new NoProgressState());
-            } else if (FLItems.HANGING_LIGHTS.filter(i ->
+            } else if (FLItems.HANGING_LIGHTS.toOptional().filter(i ->
                     player.getInventory().getSelected().getItem() == i ||
                     player.getInventory().contains(new ItemStack(i)) ||
                     player.getStats().getValue(Stats.ITEM_CRAFTED.get(i)) > 0).isPresent()) {
@@ -144,6 +138,8 @@ public class ClippyController {
     }
 
     static class Balloon implements Toast {
+        static final ResourceLocation TEXTURE = ResourceLocation.withDefaultNamespace("toast/tutorial");
+
         final LazyItemStack stack;
         final Component title;
         @Nullable
@@ -163,13 +159,13 @@ public class ClippyController {
 
         @Override
         public Visibility render(final GuiGraphics stack, final ToastComponent toastGui, final long delta) {
-            stack.blit(TEXTURE, 0, 0, 0, 96, 160, 32);
+            stack.blitSprite(TEXTURE, 0, 0, 0, 160, 32);
             stack.renderFakeItem(this.stack.get(), 6 + 2, 6 + 2);
             if (this.subtitle == null) {
-                stack.drawString(toastGui.getMinecraft().font, this.title, 30, 12, 0xFF500050);
+                stack.drawString(toastGui.getMinecraft().font, this.title, 30, 12, 0xFF500050, false);
             } else {
-                stack.drawString(toastGui.getMinecraft().font, this.title, 30, 7, 0xFF500050);
-                stack.drawString(toastGui.getMinecraft().font, this.subtitle, 30, 18, 0xFF000000);
+                stack.drawString(toastGui.getMinecraft().font, this.title, 30, 7, 0xFF500050, false);
+                stack.drawString(toastGui.getMinecraft().font, this.subtitle, 30, 18, 0xFF000000, false);
             }
             return this.visibility;
         }

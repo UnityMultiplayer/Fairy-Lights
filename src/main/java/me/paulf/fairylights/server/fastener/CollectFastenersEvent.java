@@ -1,17 +1,24 @@
 package me.paulf.fairylights.server.fastener;
 
 import me.paulf.fairylights.server.capability.CapabilityHandler;
+import net.fabricmc.fabric.api.event.Event;
+import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.eventbus.api.Event;
+import org.ladysnake.cca.api.v3.component.ComponentAccess;
 
 import java.util.ConcurrentModificationException;
 import java.util.Set;
 
-public class CollectFastenersEvent extends Event {
+public class CollectFastenersEvent {
+    public static final Event<CollectFastenersCallback> EVENT = EventFactory.createArrayBacked(CollectFastenersCallback.class, callbacks -> event -> {
+        for (CollectFastenersCallback callback : callbacks) {
+            callback.onCollectFasteners(event);
+        }
+    });
+
     private final Level world;
 
     private final AABB region;
@@ -42,13 +49,18 @@ public class CollectFastenersEvent extends Event {
         }
     }
 
-    public void accept(final ICapabilityProvider provider) {
-        provider.getCapability(CapabilityHandler.FASTENER_CAP).ifPresent(this::accept);
+    public void accept(final ComponentAccess provider) {
+        CapabilityHandler.FASTENER_CAP.maybeGet(provider).ifPresent(this::accept);
     }
 
     public void accept(final Fastener<?> fastener) {
         if (this.region.contains(fastener.getConnectionPoint())) {
             this.fasteners.add(fastener);
         }
+    }
+
+    @FunctionalInterface
+    public interface CollectFastenersCallback {
+        void onCollectFasteners(CollectFastenersEvent event);
     }
 }

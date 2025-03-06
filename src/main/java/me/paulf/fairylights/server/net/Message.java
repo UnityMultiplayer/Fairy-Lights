@@ -1,9 +1,7 @@
 package me.paulf.fairylights.server.net;
 
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-public interface Message {
-    void encode(final FriendlyByteBuf buf);
+public interface Message extends CustomPacketPayload {
 
-    void decode(final FriendlyByteBuf buf);
 }

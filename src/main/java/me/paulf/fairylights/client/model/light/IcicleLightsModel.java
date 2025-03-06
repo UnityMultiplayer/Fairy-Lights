@@ -29,18 +29,18 @@ public class IcicleLightsModel extends LightModel<MultiLightBehavior> {
     }
 
     @Override
-    public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
-        super.renderToBuffer(matrix, builder, light, overlay, r, g, b, a);
+    public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final int color) {
+        super.renderToBuffer(matrix, builder, light, overlay, color);
         for (final ColorLightModel bulb : this.bulbs) {
-            bulb.renderToBuffer(matrix, builder, light, overlay, r, g, b, a);
+            bulb.renderToBuffer(matrix, builder, light, overlay, color);
         }
     }
 
     @Override
-    public void renderTranslucent(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
-        super.renderTranslucent(matrix, builder, light, overlay, r, g, b, a);
+    public void renderTranslucent(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final int color) {
+        super.renderTranslucent(matrix, builder, light, overlay, color);
         for (final ColorLightModel bulb : this.bulbs) {
-            bulb.renderTranslucent(matrix, builder, light, overlay, r, g, b, a);
+            bulb.renderTranslucent(matrix, builder, light, overlay, color);
         }
     }
 

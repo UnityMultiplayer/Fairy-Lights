@@ -1,44 +1,51 @@
 package me.paulf.fairylights.server.net.clientbound;
 
+import me.paulf.fairylights.FairyLights;
 import me.paulf.fairylights.server.capability.CapabilityHandler;
-import me.paulf.fairylights.server.net.ClientMessageContext;
 import me.paulf.fairylights.server.net.Message;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 
-import java.util.function.BiConsumer;
-
 public final class UpdateEntityFastenerMessage implements Message {
+    public static final Type<UpdateEntityFastenerMessage> TYPE = new Type(ResourceLocation.fromNamespaceAndPath(FairyLights.ID, "update_entity_fastener"));
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, UpdateEntityFastenerMessage> CODEC = StreamCodec.composite(
+            ByteBufCodecs.VAR_INT, msg -> msg.entityId,
+            ByteBufCodecs.COMPOUND_TAG, msg -> msg.compound,
+            UpdateEntityFastenerMessage::new
+    );
+
     private int entityId;
 
     private CompoundTag compound;
 
-    public UpdateEntityFastenerMessage() {}
+    public UpdateEntityFastenerMessage(int id, CompoundTag tag) {
+        this.entityId = id;
+        this.compound = tag;
+    }
 
     public UpdateEntityFastenerMessage(final Entity entity, final CompoundTag compound) {
         this.entityId = entity.getId();
         this.compound = compound;
     }
 
-    @Override
-    public void encode(final FriendlyByteBuf buf) {
-        buf.writeVarInt(this.entityId);
-        buf.writeNbt(this.compound);
-    }
-
-    @Override
-    public void decode(final FriendlyByteBuf buf) {
-        this.entityId = buf.readVarInt();
-        this.compound = buf.readNbt();
-    }
-
-    public static final class Handler implements BiConsumer<UpdateEntityFastenerMessage, ClientMessageContext> {
+    public static final class Handler implements ClientPlayNetworking.PlayPayloadHandler<UpdateEntityFastenerMessage> {
         @Override
-        public void accept(final UpdateEntityFastenerMessage message, final ClientMessageContext context) {
-            final Entity entity = context.getWorld().getEntity(message.entityId);
+        public void receive(final UpdateEntityFastenerMessage message, final ClientPlayNetworking.Context context) {
+            final Entity entity = context.client().level.getEntity(message.entityId);
             if (entity != null) {
-                entity.getCapability(CapabilityHandler.FASTENER_CAP).ifPresent(f -> f.deserializeNBT(message.compound));
+                CapabilityHandler.FASTENER_CAP.maybeGet(entity).ifPresent(f -> f.deserializeNBT(message.compound));
             }
         }
     }

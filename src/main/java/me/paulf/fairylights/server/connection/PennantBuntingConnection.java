@@ -1,15 +1,21 @@
 package me.paulf.fairylights.server.connection;
 
+import io.github.fabricators_of_create.porting_lib.core.util.ServerLifecycleHooks;
+import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
 import me.paulf.fairylights.client.gui.EditLetteredConnectionScreen;
 import me.paulf.fairylights.server.collision.Intersection;
 import me.paulf.fairylights.server.fastener.Fastener;
 import me.paulf.fairylights.server.feature.FeatureType;
 import me.paulf.fairylights.server.feature.Pennant;
 import me.paulf.fairylights.server.item.DyeableItem;
+import me.paulf.fairylights.server.item.components.FLComponents;
 import me.paulf.fairylights.server.sound.FLSounds;
 import me.paulf.fairylights.util.OreDictUtils;
 import me.paulf.fairylights.util.styledstring.StyledString;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -19,9 +25,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.items.ItemHandlerHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,7 +112,7 @@ public final class PennantBuntingConnection extends HangingFeatureConnection<Pen
     }
 
     @Override
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     public Screen createTextGUI() {
         return new EditLetteredConnectionScreen<>(this);
     }
@@ -119,11 +122,22 @@ public final class PennantBuntingConnection extends HangingFeatureConnection<Pen
         final CompoundTag compound = super.serializeLogic();
         final ListTag patternList = new ListTag();
         for (final ItemStack entry : this.pattern) {
-            patternList.add(entry.save(new CompoundTag()));
+            patternList.add(entry.save(ServerLifecycleHooks.getCurrentServer().registryAccess()));
         }
         compound.put("pattern", patternList);
         compound.put("text", StyledString.serialize(this.text));
         return compound;
+    }
+
+    @Override
+    public DataComponentMap serializeItem() {
+        return DataComponentMap.composite(
+            super.serializeItem(),
+            DataComponentMap.builder()
+                .set(FLComponents.PATTERN, List.copyOf(this.pattern))
+                .set(FLComponents.STYLED_STRING, this.text)
+                .build()
+        );
     }
 
     @Override
@@ -132,8 +146,15 @@ public final class PennantBuntingConnection extends HangingFeatureConnection<Pen
         this.pattern = new ArrayList<>();
         final ListTag patternList = compound.getList("pattern", Tag.TAG_COMPOUND);
         for (int i = 0; i < patternList.size(); i++) {
-            this.pattern.add(ItemStack.of(patternList.getCompound(i)));
+            this.pattern.add(ItemStack.parseOptional(ServerLifecycleHooks.getCurrentServer().registryAccess(), patternList.getCompound(i)));
         }
         this.text = StyledString.deserialize(compound.getCompound("text"));
+    }
+
+    @Override
+    public void deserializeLogic(DataComponentMap components) {
+        super.deserializeLogic(components);
+        this.pattern = components.getOrDefault(FLComponents.PATTERN, new ArrayList<>());
+        this.text = components.getOrDefault(FLComponents.STYLED_STRING, new StyledString());
     }
 }

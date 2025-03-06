@@ -1,5 +1,7 @@
 package me.paulf.fairylights.server.connection;
 
+import io.github.fabricators_of_create.porting_lib.core.util.ServerLifecycleHooks;
+import io.github.fabricators_of_create.porting_lib.transfer.item.ItemHandlerHelper;
 import me.paulf.fairylights.server.block.FLBlocks;
 import me.paulf.fairylights.server.fastener.Fastener;
 import me.paulf.fairylights.server.feature.FeatureType;
@@ -8,6 +10,7 @@ import me.paulf.fairylights.server.feature.light.LightBehavior;
 import me.paulf.fairylights.server.item.HangingLightsConnectionItem;
 import me.paulf.fairylights.server.item.LightVariant;
 import me.paulf.fairylights.server.item.SimpleLightVariant;
+import me.paulf.fairylights.server.item.components.FLComponents;
 import me.paulf.fairylights.server.item.crafting.FLCraftingRecipes;
 import me.paulf.fairylights.server.jingle.Jingle;
 import me.paulf.fairylights.server.jingle.JinglePlayer;
@@ -15,6 +18,7 @@ import me.paulf.fairylights.server.sound.FLSounds;
 import me.paulf.fairylights.server.string.StringType;
 import me.paulf.fairylights.server.string.StringTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
@@ -29,15 +33,9 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.items.ItemHandlerHelper;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public final class HangingLightsConnection extends HangingFeatureConnection<Light<?>> {
     private static final int MAX_LIGHT = 15;
@@ -249,7 +247,9 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
         compound.putBoolean("isOn", this.isOn);
         final ListTag litBlocks = new ListTag();
         for (final BlockPos litBlock : this.litBlocks) {
-            litBlocks.add(NbtUtils.writeBlockPos(litBlock));
+            var tag = new CompoundTag();
+            tag.put("pos", NbtUtils.writeBlockPos(litBlock));
+            litBlocks.add(tag);
         }
         compound.put("litBlocks", litBlocks);
         return compound;
@@ -268,7 +268,7 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
         this.litBlocks.clear();
         final ListTag litBlocks = compound.getList("litBlocks", Tag.TAG_COMPOUND);
         for (int i = 0; i < litBlocks.size(); i++) {
-            this.litBlocks.add(NbtUtils.readBlockPos(litBlocks.getCompound(i)));
+            this.litBlocks.add(NbtUtils.readBlockPos(litBlocks.getCompound(i), "pos").orElse(BlockPos.ZERO));
         }
     }
 
@@ -278,10 +278,20 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
         HangingLightsConnectionItem.setString(compound, this.string);
         final ListTag tagList = new ListTag();
         for (final ItemStack light : this.pattern) {
-            tagList.add(light.save(new CompoundTag()));
+            tagList.add(light.save(ServerLifecycleHooks.getCurrentServer().registryAccess()));
         }
         compound.put("pattern", tagList);
         return compound;
+    }
+
+    @Override
+    public DataComponentMap serializeItem() {
+        return DataComponentMap.composite(
+            super.serializeItem(),
+            DataComponentMap.builder()
+                .set(FLComponents.PATTERN, List.copyOf(this.pattern))
+                .build()
+        );
     }
 
     @Override
@@ -292,7 +302,14 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
         this.pattern = new ArrayList<>();
         for (int i = 0; i < patternList.size(); i++) {
             final CompoundTag lightCompound = patternList.getCompound(i);
-            this.pattern.add(ItemStack.of(lightCompound));
+            this.pattern.add(ItemStack.parseOptional(ServerLifecycleHooks.getCurrentServer().registryAccess(), lightCompound));
         }
+    }
+
+    @Override
+    public void deserializeLogic(DataComponentMap components) {
+        super.deserializeLogic(components);
+        this.string = components.get(FLComponents.STRING_TYPE);
+        this.pattern = List.copyOf(components.getOrDefault(FLComponents.PATTERN, new ArrayList<>()));
     }
 }

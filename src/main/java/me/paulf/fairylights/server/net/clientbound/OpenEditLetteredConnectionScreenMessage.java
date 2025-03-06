@@ -1,24 +1,42 @@
 package me.paulf.fairylights.server.net.clientbound;
 
+import me.paulf.fairylights.FairyLights;
 import me.paulf.fairylights.client.gui.EditLetteredConnectionScreen;
 import me.paulf.fairylights.server.connection.Connection;
 import me.paulf.fairylights.server.connection.Lettered;
-import me.paulf.fairylights.server.net.ClientMessageContext;
+import me.paulf.fairylights.server.net.ConnectionInfo;
 import me.paulf.fairylights.server.net.ConnectionMessage;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
-
-import java.util.function.BiConsumer;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 
 public class OpenEditLetteredConnectionScreenMessage<C extends Connection & Lettered> extends ConnectionMessage {
-    public OpenEditLetteredConnectionScreenMessage() {}
+    public static final Type<OpenEditLetteredConnectionScreenMessage<?>> TYPE = new Type(ResourceLocation.fromNamespaceAndPath(FairyLights.ID, "open_edit_lettered_screen"));
+
+    @Override
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
+    }
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, OpenEditLetteredConnectionScreenMessage<?>> CODEC = StreamCodec.composite(
+            ConnectionInfo.STREAM_CODEC, OpenEditLetteredConnectionScreenMessage::getData,
+            OpenEditLetteredConnectionScreenMessage::new
+    );
+
+    public OpenEditLetteredConnectionScreenMessage(ConnectionInfo data) {
+        super(data);
+    }
 
     public OpenEditLetteredConnectionScreenMessage(final C connection) {
         super(connection);
     }
 
-    public static final class Handler implements BiConsumer<OpenEditLetteredConnectionScreenMessage<?>, ClientMessageContext> {
+    public static final class Handler implements ClientPlayNetworking.PlayPayloadHandler<OpenEditLetteredConnectionScreenMessage<?>> {
         @Override
-        public void accept(final OpenEditLetteredConnectionScreenMessage<?> message, final ClientMessageContext context) {
+        public void receive(final OpenEditLetteredConnectionScreenMessage<?> message, final ClientPlayNetworking.Context context) {
             this.accept(message);
         }
 

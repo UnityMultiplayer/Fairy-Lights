@@ -5,27 +5,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import me.paulf.fairylights.client.ClientProxy;
 import me.paulf.fairylights.client.FLModelLayers;
-import me.paulf.fairylights.client.model.light.CandleLanternModel;
-import me.paulf.fairylights.client.model.light.ColorCandleLanternModel;
-import me.paulf.fairylights.client.model.light.ColorOilLanternModel;
-import me.paulf.fairylights.client.model.light.FairyLightModel;
-import me.paulf.fairylights.client.model.light.FlowerLightModel;
-import me.paulf.fairylights.client.model.light.GhostLightModel;
-import me.paulf.fairylights.client.model.light.HeartLightModel;
-import me.paulf.fairylights.client.model.light.IcicleLightsModel;
-import me.paulf.fairylights.client.model.light.IncandescentLightModel;
-import me.paulf.fairylights.client.model.light.JackOLanternLightModel;
-import me.paulf.fairylights.client.model.light.LightModel;
-import me.paulf.fairylights.client.model.light.MeteorLightModel;
-import me.paulf.fairylights.client.model.light.MoonLightModel;
-import me.paulf.fairylights.client.model.light.OilLanternModel;
-import me.paulf.fairylights.client.model.light.OrbLanternModel;
-import me.paulf.fairylights.client.model.light.PaperLanternModel;
-import me.paulf.fairylights.client.model.light.SkullLightModel;
-import me.paulf.fairylights.client.model.light.SnowflakeLightModel;
-import me.paulf.fairylights.client.model.light.SpiderLightModel;
-import me.paulf.fairylights.client.model.light.StarLightModel;
-import me.paulf.fairylights.client.model.light.WitchLightModel;
+import me.paulf.fairylights.client.model.light.*;
 import me.paulf.fairylights.server.feature.light.Light;
 import me.paulf.fairylights.server.feature.light.LightBehavior;
 import me.paulf.fairylights.server.item.LightVariant;
@@ -34,7 +14,8 @@ import me.paulf.fairylights.util.FLMth;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraftforge.client.ForgeRenderTypes;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.util.FastColor;
 
 import java.util.List;
 import java.util.Map;
@@ -56,7 +37,7 @@ public class LightRenderer {
         }
 
         @Override
-        public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
+        public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final int color) {
         }
     }
 
@@ -98,7 +79,7 @@ public class LightRenderer {
     }
 
     public Data start(final MultiBufferSource source) {
-        final VertexConsumer buf = ClientProxy.TRANSLUCENT_TEXTURE.buffer(source, ForgeRenderTypes::getUnsortedTranslucent);
+        final VertexConsumer buf = ClientProxy.TRANSLUCENT_TEXTURE.buffer(source, RenderType::entityTranslucent);
         ForwardingVertexConsumer translucent = new ForwardingVertexConsumer() {
             @Override
             protected VertexConsumer delegate() {
@@ -106,8 +87,8 @@ public class LightRenderer {
             }
 
             @Override
-            public VertexConsumer normal(float x, float y, float z) {
-                return super.normal(0.0F, 1.0F, 0.0F);
+            public VertexConsumer setNormal(float x, float y, float z) {
+                return super.setNormal(0.0F, 1.0F, 0.0F);
             }
         };
         return new Data(buf, translucent);
@@ -128,8 +109,8 @@ public class LightRenderer {
 
     public <T extends LightBehavior> void render(final PoseStack matrix, final Data data, final Light<T> light, final LightModel<T> model, final float delta, final int packedLight, final int packedOverlay) {
         model.animate(light, light.getBehavior(), delta);
-        model.renderToBuffer(matrix, data.solid, packedLight, packedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
-        model.renderTranslucent(matrix, data.translucent, packedLight, packedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
+        model.renderToBuffer(matrix, data.solid, packedLight, packedOverlay, FastColor.ARGB32.color(255, 255, 255, 255));
+        model.renderTranslucent(matrix, data.translucent, packedLight, packedOverlay, FastColor.ARGB32.color(255, 255, 255, 255));
     }
 
     interface LightModelProvider<T extends LightBehavior> {

@@ -1,5 +1,6 @@
 package me.paulf.fairylights.server;
 
+import fuzs.forgeconfigapiport.fabric.api.forge.v4.ForgeConfigRegistry;
 import me.paulf.fairylights.FairyLights;
 import me.paulf.fairylights.server.capability.CapabilityHandler;
 import me.paulf.fairylights.server.config.FLConfig;
@@ -7,42 +8,51 @@ import me.paulf.fairylights.server.fastener.BlockView;
 import me.paulf.fairylights.server.fastener.CreateBlockViewEvent;
 import me.paulf.fairylights.server.fastener.RegularBlockView;
 import me.paulf.fairylights.server.jingle.JingleManager;
+import me.paulf.fairylights.server.net.Message;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.PackType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.network.PacketDistributor;
 
 public class ServerProxy {
-    public void init(final IEventBus modBus) {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, FLConfig.GENERAL_SPEC);
-        MinecraftForge.EVENT_BUS.<AddReloadListenerEvent>addListener(e -> {
-            e.addListener(JingleManager.INSTANCE);
-        });
-        MinecraftForge.EVENT_BUS.register(new ServerEventHandler());
-        modBus.addListener(this::setup);
+    public static final ServerEventHandler serverHandler = new ServerEventHandler();
+
+    public void init() {
+        ForgeConfigRegistry.INSTANCE.register(FairyLights.ID, ModConfig.Type.COMMON, FLConfig.GENERAL_SPEC);
+        ResourceManagerHelper.get(PackType.SERVER_DATA)
+                .registerReloadListener(JingleManager.INSTANCE);
+        this.setup();
     }
 
-    private void setup(final FMLCommonSetupEvent event) {
+    private void setup() {
         CapabilityHandler.register();
     }
 
-    public static void sendToPlayersWatchingChunk(final Object message, final Level world, final BlockPos pos) {
-        FairyLights.NETWORK.send(PacketDistributor.TRACKING_CHUNK.with(() -> world.getChunkAt(pos)), message);
+    public static void sendToPlayersWatchingChunk(final Message message, final Level world, final BlockPos pos) {
+        for (ServerPlayer player : PlayerLookup.tracking((ServerLevel) world, pos)) {
+            ServerPlayNetworking.send(player, message);
+        }
     }
 
-    public static void sendToPlayersWatchingEntity(final Object message, final Entity entity) {
-        FairyLights.NETWORK.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity), message);
+    public static void sendToPlayersWatchingEntity(final Message message, final Entity entity) {
+        for (ServerPlayer player : PlayerLookup.tracking(entity)) {
+            ServerPlayNetworking.send(player, message);
+        }
+
+        if (entity instanceof ServerPlayer player) {
+            ServerPlayNetworking.send(player, message);
+        }
     }
 
     public static BlockView buildBlockView() {
         final CreateBlockViewEvent evt = new CreateBlockViewEvent(new RegularBlockView());
-        MinecraftForge.EVENT_BUS.post(evt);
+        CreateBlockViewEvent.EVENT.invoker().onCreateBlockView(evt);
         return evt.getView();
     }
 

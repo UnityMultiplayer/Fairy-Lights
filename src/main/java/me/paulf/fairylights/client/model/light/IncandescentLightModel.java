@@ -6,6 +6,7 @@ import me.paulf.fairylights.server.feature.light.BrightnessLightBehavior;
 import me.paulf.fairylights.server.feature.light.Light;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.util.FastColor;
 
 public class IncandescentLightModel extends LightModel<BrightnessLightBehavior> {
     final ModelPart bulb;
@@ -30,21 +31,33 @@ public class IncandescentLightModel extends LightModel<BrightnessLightBehavior> 
     }
 
     @Override
-    public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
-        super.renderToBuffer(matrix, builder, light, overlay, r, g, b, a);
+    public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final int color) {
+        super.renderToBuffer(matrix, builder, light, overlay, color);
+
+        float r = FastColor.ARGB32.red(color) / 255f;
+        float g = FastColor.ARGB32.green(color) / 255f;
+        float b = FastColor.ARGB32.blue(color) / 255f;
+        float a = FastColor.ARGB32.alpha(color) / 255f;
+
         final int emissiveLight = this.getLight(light);
         final float cr = 0.23F, cg = 0.18F, cb = 0.14F;
         final float br = this.brightness;
-        this.filament.render(matrix, builder, emissiveLight, overlay, r * (cr * (1.0F - br) + br), g * (cg * (1.0F - br) + br), b * (cb * (1.0F - br) + br), a);
+        this.filament.render(matrix, builder, emissiveLight, overlay, FastColor.ARGB32.colorFromFloat(a, r * (cr * (1.0F - br) + br), g * (cg * (1.0F - br) + br), b * (cb * (1.0F - br) + br)));
     }
 
     @Override
-    public void renderTranslucent(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
+    public void renderTranslucent(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final int color) {
         final float bi = this.brightness;
         final int emissiveLight = this.getLight(light);
         final float br = 1.0F, bg = 0.73F, bb = 0.3F;
-        this.bulb.render(matrix, builder, emissiveLight, overlay, r * (br * bi + (1.0F - bi)), g * (bg * bi + (1.0F - bi)), b * (bb * bi + (1.0F - bi)), bi * 0.4F + 0.25F);
-        super.renderTranslucent(matrix, builder, light, overlay, r, g, b, a);
+
+        float r = FastColor.ARGB32.red(color) / 255f;
+        float g = FastColor.ARGB32.green(color) / 255f;
+        float b = FastColor.ARGB32.blue(color) / 255f;
+        float a = FastColor.ARGB32.alpha(color) / 255f;
+
+        this.bulb.render(matrix, builder, emissiveLight, overlay, FastColor.ARGB32.colorFromFloat(bi * 0.4F + 0.25F, r * (br * bi + (1.0F - bi)), g * (bg * bi + (1.0F - bi)), b * (bb * bi + (1.0F - bi))));
+        super.renderTranslucent(matrix, builder, light, overlay, color);
     }
 
     public static LayerDefinition createLayer() {

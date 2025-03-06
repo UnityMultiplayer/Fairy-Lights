@@ -1,24 +1,39 @@
 package me.paulf.fairylights.server.entity;
 
+import dev.architectury.registry.registries.DeferredRegister;
+import dev.architectury.registry.registries.RegistrySupplier;
 import me.paulf.fairylights.FairyLights;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
 
 public final class FLEntities {
     private FLEntities() {}
 
-    public static final DeferredRegister<EntityType<?>> REG = DeferredRegister.create(ForgeRegistries.ENTITY_TYPES, FairyLights.ID);
+    public static final DeferredRegister<EntityType<?>> REG = DeferredRegister.create(FairyLights.ID, Registries.ENTITY_TYPE);
 
-    public static final RegistryObject<EntityType<FenceFastenerEntity>> FASTENER = REG.register("fastener", () ->
+    public static final RegistrySupplier<EntityType<FenceFastenerEntity>> FASTENER = REG.register("fastener", () ->
         EntityType.Builder.<FenceFastenerEntity>of(FenceFastenerEntity::new, MobCategory.MISC)
             .sized(1.15F, 2.8F)
-            .setTrackingRange(10)
-            .setUpdateInterval(Integer.MAX_VALUE)
-            .setShouldReceiveVelocityUpdates(false)
-            .setCustomClientFactory((message, world) -> new FenceFastenerEntity(world))
+            .clientTrackingRange(10)
+            .updateInterval(Integer.MAX_VALUE)
+            .alwaysUpdateVelocity(false)
+            /*
+             * Because this entity is inside of a block when
+             * EntityLivingBase#canEntityBeSeen performs its
+             * raytracing it will always return false during
+             * NetHandlerPlayServer#processUseEntity, making
+             * the player reach distance be limited at three
+             * blocks as opposed to the standard six blocks.
+             * EntityLivingBase#canEntityBeSeen will add the
+             * value given by getEyeHeight to the y position
+             * of the entity to calculate the end point from
+             * which to raytrace to. Returning one lets most
+             * interactions with a player succeed, typically
+             * for breaking the connection or creating a new
+             * connection. I hope you enjoy my line lengths.
+             */
+            .eyeHeight(1)
             .build(FairyLights.ID + ":fastener")
     );
 }

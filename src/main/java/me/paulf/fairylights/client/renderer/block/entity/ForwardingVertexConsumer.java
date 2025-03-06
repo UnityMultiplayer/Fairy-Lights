@@ -6,47 +6,33 @@ public abstract class ForwardingVertexConsumer implements VertexConsumer {
     protected abstract VertexConsumer delegate();
 
     @Override
-    public VertexConsumer vertex(double x, double y, double z) {
-        return this.delegate().vertex(x, y, z);
+    public VertexConsumer addVertex(float x, float y, float z) {
+        return delegate().addVertex(x, y, z);
     }
 
     @Override
-    public VertexConsumer color(int r, int g, int b, int a) {
-        return this.delegate().color(r, g, b, a);
+    public VertexConsumer setColor(int red, int green, int blue, int alpha) {
+        return delegate().setColor(red, green, blue, alpha);
     }
 
     @Override
-    public VertexConsumer uv(float u, float v) {
-        return this.delegate().uv(u, v);
+    public VertexConsumer setUv(float u, float v) {
+        return delegate().setUv(u, v);
     }
 
     @Override
-    public VertexConsumer overlayCoords(int u, int v) {
-        return this.delegate().overlayCoords(u, v);
+    public VertexConsumer setUv1(int u, int v) {
+        return delegate().setUv1(u, v);
     }
 
     @Override
-    public VertexConsumer uv2(int u, int v) {
-        return this.delegate().uv2(u, v);
+    public VertexConsumer setUv2(int u, int v) {
+        return delegate().setUv2(u, v);
     }
 
     @Override
-    public VertexConsumer normal(float x, float y, float z) {
-        return this.delegate().normal(x, y, z);
+    public VertexConsumer setNormal(float normalX, float normalY, float normalZ) {
+        return delegate().setNormal(normalX, normalY, normalZ);
     }
 
-    @Override
-    public void endVertex() {
-        this.delegate().endVertex();
-    }
-
-    @Override
-    public void defaultColor(int r, int g, int b, int a) {
-        this.delegate().defaultColor(r, g, b, a);
-    }
-
-    @Override
-    public void unsetDefaultColor() {
-        this.delegate().unsetDefaultColor();
-    }
 }

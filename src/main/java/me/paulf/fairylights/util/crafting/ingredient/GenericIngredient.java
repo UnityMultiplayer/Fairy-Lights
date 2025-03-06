@@ -1,8 +1,8 @@
 package me.paulf.fairylights.util.crafting.ingredient;
 
 import com.google.common.collect.ImmutableList;
+import me.paulf.fairylights.server.item.components.ModifiableDataComponentMap;
 import me.paulf.fairylights.util.crafting.GenericRecipe;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -37,9 +37,9 @@ public interface GenericIngredient<I extends GenericIngredient<I, M>, M extends 
         return false;
     }
 
-    default void present(final CompoundTag nbt) {}
+    default void present(final ModifiableDataComponentMap components) {}
 
-    default void absent(final CompoundTag nbt) {}
+    default void absent(final ModifiableDataComponentMap components) {}
 
     default ImmutableList<ItemStack> getMatchingSubtypes(final Ingredient stack) {
         Objects.requireNonNull(stack, "stack");

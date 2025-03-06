@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "fairylights",
+  "version": "${version}",
+  "name": "Fairy Lights",
+  "description": "Fairy Lights introduces decorative string lights, bunting, garland, and more!",
+  "authors": [
+    "pau101",
+    "BluSpring"
+  ],
+  "contact": {
+    "repo": "https://github.com/UnityMultiplayer/Fairy-Lights",
+    "issues": "https://github.com/UnityMultiplayer/Fairy-Lights/issues"
+  },
+  "license": "MIT",
+  "icon": "logo.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "me.paulf.fairylights.FairyLights"
+    ],
+    "cardinal-components-block": [
+      "me.paulf.fairylights.server.capability.CapabilityHandler"
+    ],
+    "cardinal-components-entity": [
+      "me.paulf.fairylights.server.capability.CapabilityHandler"
+    ],
+    "fabric-datagen": [
+      "me.paulf.fairylights.data.DataGatherer"
+    ]
+  },
+  "mixins": [
+    "fairylights.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-api": ">=${fabric_version}",
+    "minecraft": "${minecraft_version}",
+    "architectury": ">=${architectury_version}"
+  },
+  "custom": {
+    "cardinal-components": [
+      "fairylights:fastener"
+    ]
+  }
+}

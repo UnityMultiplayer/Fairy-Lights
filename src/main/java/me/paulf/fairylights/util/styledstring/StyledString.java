@@ -1,20 +1,39 @@
 package me.paulf.fairylights.util.styledstring;
 
 import com.google.common.base.Preconditions;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public final class StyledString implements Comparable<StyledString>, CharSequence {
+    public static final Codec<StyledString> CODEC = RecordCodecBuilder.create(instance ->
+        instance.group(
+                Codec.STRING
+                    .fieldOf("value")
+                    .forGetter(str -> str.value),
+                Style.CODEC
+                    .listOf()
+                    .fieldOf("styling")
+                    .forGetter(str -> List.of(str.styling))
+            )
+            .apply(instance, StyledString::new)
+    );
+    public static final StreamCodec<FriendlyByteBuf, StyledString> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.COMPOUND_TAG, StyledString::serialize,
+            StyledString::deserialize
+    );
+
     private final String value;
 
     private final Style[] styling;
@@ -36,6 +55,11 @@ public final class StyledString implements Comparable<StyledString>, CharSequenc
     public StyledString(final String value, final Style[] styling) {
         this.value = value;
         this.styling = Objects.requireNonNull(styling, "styling");
+    }
+
+    public StyledString(final String value, final List<Style> styling) {
+        this.value = value;
+        this.styling = Objects.requireNonNull(styling, "styling").toArray(Style[]::new);
     }
 
     @Override

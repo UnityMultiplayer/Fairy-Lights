@@ -1,12 +1,7 @@
 package me.paulf.fairylights.util.crafting;
 
 import com.google.common.base.Strings;
-import me.paulf.fairylights.util.crafting.ingredient.AuxiliaryIngredient;
-import me.paulf.fairylights.util.crafting.ingredient.BasicRegularIngredient;
-import me.paulf.fairylights.util.crafting.ingredient.InertBasicAuxiliaryIngredient;
-import me.paulf.fairylights.util.crafting.ingredient.LazyTagIngredient;
-import me.paulf.fairylights.util.crafting.ingredient.RegularIngredient;
-import net.minecraft.resources.ResourceLocation;
+import me.paulf.fairylights.util.crafting.ingredient.*;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -14,18 +9,12 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.block.Block;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
 public final class GenericRecipeBuilder {
     private static final char EMPTY_SPACE = ' ';
-
-    private final ResourceLocation name;
 
     private final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer;
 
@@ -43,20 +32,19 @@ public final class GenericRecipeBuilder {
 
     private final List<AuxiliaryIngredient<?>> auxiliaryIngredients = new ArrayList<>();
 
-    public GenericRecipeBuilder(final ResourceLocation name, final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer) {
-        this(name, serializer, ItemStack.EMPTY);
+    public GenericRecipeBuilder(final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer) {
+        this(serializer, ItemStack.EMPTY);
     }
 
-    public GenericRecipeBuilder(final ResourceLocation name, final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer, final Item item) {
-        this(name, serializer, new ItemStack(item));
+    public GenericRecipeBuilder(final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer, final Item item) {
+        this(serializer, new ItemStack(item));
     }
 
-    public GenericRecipeBuilder(final ResourceLocation name, final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer, final Block block) {
-        this(name, serializer, new ItemStack(block));
+    public GenericRecipeBuilder(final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer, final Block block) {
+        this(serializer, new ItemStack(block));
     }
 
-    public GenericRecipeBuilder(final ResourceLocation name, final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer, final ItemStack output) {
-        this.name = name;
+    public GenericRecipeBuilder(final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer, final ItemStack output) {
         this.serializer = serializer;
         this.output = Objects.requireNonNull(output, "output");
     }
@@ -199,7 +187,7 @@ public final class GenericRecipeBuilder {
         final AuxiliaryIngredient<?>[] auxiliaryIngredients = this.auxiliaryIngredients.toArray(
             new AuxiliaryIngredient<?>[0]
         );
-        return new GenericRecipe(this.name, this.serializer, this.output, ingredients, auxiliaryIngredients, this.width, this.height, output);
+        return new GenericRecipe(this.serializer, this.output, ingredients, auxiliaryIngredients, this.width, this.height, output);
     }
 
     @SuppressWarnings("unchecked")

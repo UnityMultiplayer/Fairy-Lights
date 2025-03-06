@@ -13,6 +13,8 @@ import mezz.jei.api.registration.IVanillaCategoryExtensionRegistration;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
 
 import java.util.stream.Collectors;
@@ -21,12 +23,12 @@ import java.util.stream.Collectors;
 public final class FairyLightsJEIPlugin implements IModPlugin {
     @Override
     public ResourceLocation getPluginUid() {
-        return new ResourceLocation(FairyLights.ID, "plugin");
+        return ResourceLocation.fromNamespaceAndPath(FairyLights.ID, "plugin");
     }
 
     @Override
     public void registerVanillaCategoryExtensions(final IVanillaCategoryExtensionRegistration registration) {
-        registration.getCraftingCategory().addCategoryExtension(GenericRecipe.class, GenericRecipeWrapper::new);
+        registration.getCraftingCategory().addExtension(GenericRecipe.class, new GenericRecipeWrapper());
     }
 
     @Override
@@ -36,10 +38,11 @@ public final class FairyLightsJEIPlugin implements IModPlugin {
         registration.addRecipes(
             RecipeTypes.CRAFTING,
             recipeManager.getRecipes().stream()
-                .filter(GenericRecipe.class::isInstance)
-                .map(GenericRecipe.class::cast)
-                .filter(GenericRecipe::isSpecial)
-                .collect(Collectors.toList()));
+                .filter(holder -> GenericRecipe.class.isInstance(holder.value()))
+                .filter(holder -> holder.value().isSpecial())
+                .map(holder -> (RecipeHolder<CraftingRecipe>) holder)
+                .collect(Collectors.toList())
+        );
     }
 
     @Override

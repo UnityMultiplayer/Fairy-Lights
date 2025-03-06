@@ -1,5 +1,6 @@
 package me.paulf.fairylights.server.entity;
 
+import io.github.fabricators_of_create.porting_lib.entity.IEntityWithComplexSpawn;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
 import me.paulf.fairylights.server.ServerProxy;
@@ -14,18 +15,17 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.decoration.BlockAttachedEntity;
 import net.minecraft.world.entity.decoration.HangingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -33,14 +33,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.entity.IEntityAdditionalSpawnData;
-import net.minecraftforge.network.NetworkHooks;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
+import java.util.Optional;
 
-public final class FenceFastenerEntity extends HangingEntity implements IEntityAdditionalSpawnData {
+public final class FenceFastenerEntity extends HangingEntity implements IEntityWithComplexSpawn {
     private int surfaceCheckTime;
 
     public FenceFastenerEntity(final EntityType<? extends FenceFastenerEntity> type, final Level world) {
@@ -56,7 +54,7 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityA
         this.setPos(pos.getX(), pos.getY(), pos.getZ());
     }
 
-    @Override
+    /*@Override
     public int getWidth() {
         return 9;
     }
@@ -64,36 +62,11 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityA
     @Override
     public int getHeight() {
         return 9;
-    }
-
-    @Override
-    public float getEyeHeight(final Pose pose, final EntityDimensions size) {
-        /*
-         * Because this entity is inside of a block when
-         * EntityLivingBase#canEntityBeSeen performs its
-         * raytracing it will always return false during
-         * NetHandlerPlayServer#processUseEntity, making
-         * the player reach distance be limited at three
-         * blocks as opposed to the standard six blocks.
-         * EntityLivingBase#canEntityBeSeen will add the
-         * value given by getEyeHeight to the y position
-         * of the entity to calculate the end point from
-         * which to raytrace to. Returning one lets most
-         * interactions with a player succeed, typically
-         * for breaking the connection or creating a new
-         * connection. I hope you enjoy my line lengths.
-         */
-        return 1;
-    }
+    }*/
 
     @Override
     public boolean shouldRenderAtSqrDistance(final double distance) {
         return distance < 4096;
-    }
-
-    @Override
-    public boolean ignoreExplosion() {
-        return true;
     }
 
     @Override
@@ -102,9 +75,18 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityA
     }
 
     @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+    }
+
+    @Override
     public void remove(final RemovalReason reason) {
         this.getFastener().ifPresent(Fastener::remove);
         super.remove(reason);
+    }
+
+    @Override
+    public boolean isInvulnerableTo(DamageSource source) {
+        return super.isInvulnerableTo(source) || source.is(DamageTypeTags.IS_EXPLOSION);
     }
 
     // Copy from super but remove() moved to after onBroken()
@@ -122,7 +104,7 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityA
     }
 
     @Override
-    public boolean canChangeDimensions() {
+    public boolean canChangeDimensions(Level oldLevel, Level newLevel) {
         return false;
     }
 
@@ -136,7 +118,7 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityA
 
     @Override
     public void playPlacementSound() {
-        final SoundType sound = FLBlocks.FASTENER.get().getSoundType(FLBlocks.FASTENER.get().defaultBlockState(), this.level(), this.getPos(), null);
+        final SoundType sound = FLBlocks.FASTENER.get().defaultBlockState().getSoundType();
         this.playSound(sound.getPlaceSound(), (sound.getVolume() + 1) / 2, sound.getPitch() * 0.8F);
     }
 
@@ -154,14 +136,14 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityA
     public void setDirection(final Direction facing) {}
 
     @Override
-    protected void recalculateBoundingBox() {
+    protected AABB calculateBoundingBox(BlockPos pos, Direction direction) {
         final double posX = this.pos.getX() + 0.5;
         final double posY = this.pos.getY() + 0.5;
         final double posZ = this.pos.getZ() + 0.5;
-        this.setPosRaw(posX, posY, posZ);
+        //this.setPosRaw(posX, posY, posZ);
         final float w = 3 / 16F;
         final float h = 3 / 16F;
-        this.setBoundingBox(new AABB(posX - w, posY - h, posZ - w, posX + w, posY + h, posZ + w));
+        return new AABB(posX - w, posY - h, posZ - w, posX + w, posY + h, posZ + w);
     }
 
     @Override
@@ -211,11 +193,11 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityA
 
     @Override
     public void readAdditionalSaveData(final CompoundTag compound) {
-        this.pos = NbtUtils.readBlockPos(compound.getCompound("pos"));
+        this.pos = NbtUtils.readBlockPos(compound, "pos").orElseThrow();
     }
 
     @Override
-    public void writeSpawnData(final FriendlyByteBuf buf) {
+    public void writeSpawnData(final RegistryFriendlyByteBuf buf) {
         this.getFastener().ifPresent(fastener -> {
             try {
                 NbtIo.write(fastener.serializeNBT(), new ByteBufOutputStream(buf));
@@ -226,23 +208,23 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityA
     }
 
     @Override
-    public void readSpawnData(final FriendlyByteBuf buf) {
+    public void readSpawnData(final RegistryFriendlyByteBuf buf) {
         this.getFastener().ifPresent(fastener -> {
             try {
-                fastener.deserializeNBT(NbtIo.read(new ByteBufInputStream(buf), new NbtAccounter(0x200000)));
+                fastener.deserializeNBT(NbtIo.read(new ByteBufInputStream(buf), NbtAccounter.create(0x200000)));
             } catch (final IOException e) {
                 throw new RuntimeException(e);
             }
         });
     }
 
-    @Override
+    /*@Override
     public Packet<ClientGamePacketListener> getAddEntityPacket() {
         return NetworkHooks.getEntitySpawningPacket(this);
-    }
+    }*/
 
-    private LazyOptional<Fastener<?>> getFastener() {
-        return this.getCapability(CapabilityHandler.FASTENER_CAP);
+    private Optional<Fastener<?>> getFastener() {
+        return CapabilityHandler.FASTENER_CAP.maybeGet(this);
     }
 
     public static FenceFastenerEntity create(final Level world, final BlockPos fence) {
@@ -255,7 +237,7 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityA
 
     @Nullable
     public static FenceFastenerEntity find(final Level world, final BlockPos pos) {
-        final HangingEntity entity = findHanging(world, pos);
+        final BlockAttachedEntity entity = findHanging(world, pos);
         if (entity instanceof FenceFastenerEntity) {
             return (FenceFastenerEntity) entity;
         }
@@ -263,8 +245,8 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityA
     }
 
     @Nullable
-    public static HangingEntity findHanging(final Level world, final BlockPos pos) {
-        for (final HangingEntity e : world.getEntitiesOfClass(HangingEntity.class, new AABB(pos).inflate(2))) {
+    public static BlockAttachedEntity findHanging(final Level world, final BlockPos pos) {
+        for (final BlockAttachedEntity e : world.getEntitiesOfClass(BlockAttachedEntity.class, new AABB(pos).inflate(2))) {
             if (e.getPos().equals(pos)) {
                 return e;
             }

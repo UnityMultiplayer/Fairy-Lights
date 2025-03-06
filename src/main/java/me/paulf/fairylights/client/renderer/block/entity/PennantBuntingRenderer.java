@@ -24,7 +24,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
@@ -33,13 +33,13 @@ import org.joml.Vector3f;
 import java.util.function.Function;
 
 public class PennantBuntingRenderer extends ConnectionRenderer<PennantBuntingConnection> {
-    private static final ResourceLocation TRIANGLE_MODEL = new ResourceLocation(FairyLights.ID, "entity/triangle_pennant");
+    private static final ResourceLocation TRIANGLE_MODEL = ResourceLocation.fromNamespaceAndPath(FairyLights.ID, "entity/triangle_pennant");
 
-    private static final ResourceLocation SPEARHEAD_MODEL = new ResourceLocation(FairyLights.ID, "entity/spearhead_pennant");
+    private static final ResourceLocation SPEARHEAD_MODEL = ResourceLocation.fromNamespaceAndPath(FairyLights.ID, "entity/spearhead_pennant");
 
-    private static final ResourceLocation SWALLOWTAIL_MODEl = new ResourceLocation(FairyLights.ID, "entity/swallowtail_pennant");
+    private static final ResourceLocation SWALLOWTAIL_MODEl = ResourceLocation.fromNamespaceAndPath(FairyLights.ID, "entity/swallowtail_pennant");
 
-    private static final ResourceLocation SQUARE_MODEL = new ResourceLocation(FairyLights.ID, "entity/square_pennant");
+    private static final ResourceLocation SQUARE_MODEL = ResourceLocation.fromNamespaceAndPath(FairyLights.ID, "entity/square_pennant");
 
     public static final ImmutableSet<ResourceLocation> MODELS = ImmutableSet.of(TRIANGLE_MODEL, SPEARHEAD_MODEL, SWALLOWTAIL_MODEl, SQUARE_MODEL);
 
@@ -73,9 +73,9 @@ public class PennantBuntingRenderer extends ConnectionRenderer<PennantBuntingCon
             for (int i = 0; i < count; i++) {
                 final Pennant currPennant = currLights[i];
                 final int color = currPennant.getColor();
-                final float r = ((color >> 16) & 0xFF) / 255.0F;
-                final float g = ((color >> 8) & 0xFF) / 255.0F;
-                final float b = (color & 0xFF) / 255.0F;
+                final float r = FastColor.ARGB32.red(color) / 255.0F;
+                final float g = FastColor.ARGB32.green(color) / 255.0F;
+                final float b = FastColor.ARGB32.blue(color) / 255.0F;
                 final BakedModel model = Minecraft.getInstance().getModelManager().getModel(this.models.getOrDefault(currPennant.getItem(), TRIANGLE_MODEL));
                 final Vec3 pos = currPennant.getPoint(delta);
                 matrix.pushPose();

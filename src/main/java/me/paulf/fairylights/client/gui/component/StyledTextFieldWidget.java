@@ -2,13 +2,11 @@ package me.paulf.fairylights.client.gui.component;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import me.paulf.fairylights.client.gui.EditLetteredConnectionScreen;
 import me.paulf.fairylights.util.styledstring.Style;
 import me.paulf.fairylights.util.styledstring.StyledString;
 import me.paulf.fairylights.util.styledstring.StyledStringBuilder;
 import net.minecraft.ChatFormatting;
-import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -20,6 +18,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Mth;
+import net.minecraft.util.StringUtil;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -507,7 +506,7 @@ public final class StyledTextFieldWidget extends AbstractWidget {
         if (!this.isFocused) {
             return false;
         }
-        if (SharedConstants.isAllowedChatCharacter(typedChar)) {
+        if (StringUtil.isAllowedChatCharacter(typedChar)) {
             final String writeChar = this.charInputTransformer.apply(Character.toString(typedChar));
             if (this.isWritable) {
                 this.writeText(writeChar);

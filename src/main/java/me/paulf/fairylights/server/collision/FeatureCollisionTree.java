@@ -5,8 +5,8 @@ import me.paulf.fairylights.server.feature.FeatureType;
 import me.paulf.fairylights.util.FLMth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.IntFunction;

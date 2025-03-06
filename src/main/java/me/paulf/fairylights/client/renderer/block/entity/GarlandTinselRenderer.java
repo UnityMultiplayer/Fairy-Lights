@@ -17,6 +17,7 @@ import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 
 import java.util.function.Function;
@@ -63,7 +64,7 @@ public class GarlandTinselRenderer extends ConnectionRenderer<GarlandTinselConne
             matrix.mulPose(Axis.YP.rotationDegrees(rotY));
             matrix.mulPose(Axis.ZP.rotationDegrees(rotX));
             matrix.scale(1.0F, RAND.get(i * 63) * 0.1F + 1.0F, 0.5F);
-            this.strip.renderToBuffer(matrix, buf, packedLight, packedOverlay, r, g, b, 1.0F);
+            this.strip.renderToBuffer(matrix, buf, packedLight, packedOverlay, FastColor.ARGB32.colorFromFloat(1f, r, g, b));
             matrix.popPose();
         }
         
@@ -91,8 +92,8 @@ public class GarlandTinselRenderer extends ConnectionRenderer<GarlandTinselConne
         }
 
         @Override
-        public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
-            this.root.render(matrix, builder, light, overlay, r, g, b, a);
+        public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final int color) {
+            this.root.render(matrix, builder, light, overlay, color);
         }
     }
 }

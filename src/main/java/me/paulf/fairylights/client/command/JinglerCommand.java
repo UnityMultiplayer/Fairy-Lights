@@ -10,20 +10,16 @@ import me.paulf.fairylights.client.ClientEventHandler;
 import me.paulf.fairylights.client.midi.MidiJingler;
 import me.paulf.fairylights.server.connection.Connection;
 import me.paulf.fairylights.server.connection.HangingLightsConnection;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientWorldEvents;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.sound.midi.MidiDevice;
-import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
-import javax.sound.midi.Sequencer;
-import javax.sound.midi.Transmitter;
+import javax.sound.midi.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -141,7 +137,7 @@ public final class JinglerCommand {
             .append(Component.translatable("commands.jingler.device.description", Component.literal(info.getDescription()).withStyle(ChatFormatting.GOLD)));
     }
 
-    public static void register(final IEventBus bus) {
+    public static void register() {
         // TODO: jingler tooltip line splitting
         /*bus.<RenderTooltipEvent.Pre>addListener(EventPriority.HIGH, e -> {
             if (!e.getStack().isEmpty()) return;
@@ -161,8 +157,14 @@ public final class JinglerCommand {
                 e.getFontRenderer()
             );
         });*/
-        bus.<LevelEvent.Unload>addListener(e -> {
-            if (e.getLevel().isClientSide() && USED_COMMAND.compareAndSet(true, false)) {
+        ClientWorldEvents.AFTER_CLIENT_WORLD_CHANGE.register((minecraft, clientLevel) -> {
+            if (USED_COMMAND.compareAndSet(true, false)) {
+                getDevices().forEach(JinglerCommand::close);
+            }
+        });
+
+        ClientPlayConnectionEvents.DISCONNECT.register((clientPacketListener, minecraft) -> {
+            if (USED_COMMAND.compareAndSet(true, false)) {
                 getDevices().forEach(JinglerCommand::close);
             }
         });

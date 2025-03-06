@@ -1,11 +1,14 @@
 package me.paulf.fairylights.server.block.entity;
 
+import io.github.fabricators_of_create.porting_lib.block.CustomRenderBoundingBoxBlockEntity;
+import io.github.fabricators_of_create.porting_lib.block.CustomUpdateTagHandlingBlockEntity;
 import me.paulf.fairylights.server.block.FLBlocks;
 import me.paulf.fairylights.server.block.FastenerBlock;
 import me.paulf.fairylights.server.capability.CapabilityHandler;
 import me.paulf.fairylights.server.fastener.Fastener;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.Level;
@@ -13,16 +16,17 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.util.LazyOptional;
 
-public final class FastenerBlockEntity extends BlockEntity {
+import java.util.Optional;
+
+public final class FastenerBlockEntity extends BlockEntity implements CustomRenderBoundingBoxBlockEntity, CustomUpdateTagHandlingBlockEntity {
     public FastenerBlockEntity(final BlockPos pos, final BlockState state) {
         super(FLBlockEntities.FASTENER.get(), pos ,state);
     }
 
     @Override
     public AABB getRenderBoundingBox() {
-        return this.getFastener().map(fastener -> fastener.getBounds().inflate(1)).orElseGet(super::getRenderBoundingBox);
+        return this.getFastener().map(fastener -> fastener.getBounds().inflate(1)).orElseGet(CustomRenderBoundingBoxBlockEntity.super::getRenderBoundingBox);
     }
 
     public Vec3 getOffset() {
@@ -43,8 +47,8 @@ public final class FastenerBlockEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
-        return this.saveWithoutMetadata();
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return this.saveWithoutMetadata(registries);
     }
 
     @Override
@@ -74,7 +78,7 @@ public final class FastenerBlockEntity extends BlockEntity {
         super.setRemoved();
     }
 
-    private LazyOptional<Fastener<?>> getFastener() {
-        return this.getCapability(CapabilityHandler.FASTENER_CAP);
+    private Optional<Fastener<?>> getFastener() {
+        return CapabilityHandler.FASTENER_CAP.maybeGet(this);
     }
 }
