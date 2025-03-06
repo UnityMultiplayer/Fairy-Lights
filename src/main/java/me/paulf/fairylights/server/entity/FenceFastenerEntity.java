@@ -211,7 +211,7 @@ public final class FenceFastenerEntity extends HangingEntity implements IEntityW
     public void readSpawnData(final RegistryFriendlyByteBuf buf) {
         this.getFastener().ifPresent(fastener -> {
             try {
-                fastener.deserializeNBT(NbtIo.read(new ByteBufInputStream(buf), NbtAccounter.create(0x200000)));
+                fastener.deserializeNBT(NbtIo.read(new ByteBufInputStream(buf), NbtAccounter.create(0x200000)), this.level().registryAccess());
             } catch (final IOException e) {
                 throw new RuntimeException(e);
             }

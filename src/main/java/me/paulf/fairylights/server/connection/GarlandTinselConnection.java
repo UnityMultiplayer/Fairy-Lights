@@ -3,6 +3,7 @@ package me.paulf.fairylights.server.connection;
 import me.paulf.fairylights.server.fastener.Fastener;
 import me.paulf.fairylights.server.item.DyeableItem;
 import me.paulf.fairylights.server.item.components.FLComponents;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.DyeColor;
@@ -42,8 +43,8 @@ public final class GarlandTinselConnection extends Connection {
     }
 
     @Override
-    public void deserializeLogic(final CompoundTag compound) {
-        super.deserializeLogic(compound);
+    public void deserializeLogic(final CompoundTag compound, HolderLookup.Provider registries) {
+        super.deserializeLogic(compound, registries);
         this.color = DyeableItem.getColor(compound);
     }
 

@@ -9,6 +9,7 @@ import me.paulf.fairylights.util.AABBBuilder;
 import me.paulf.fairylights.util.Curve;
 import me.paulf.fairylights.util.RegistryObjects;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -272,7 +273,7 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
     }
 
     @Override
-    public void deserializeNBT(final CompoundTag compound) {
+    public void deserializeNBT(final CompoundTag compound, HolderLookup.Provider registries) {
         final ListTag listConnections = compound.getList("outgoing", Tag.TAG_COMPOUND);
         final List<UUID> nbtUUIDs = new ArrayList<>();
         for (int i = 0; i < listConnections.size(); i++) {
@@ -286,12 +287,12 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
             nbtUUIDs.add(uuid);
             if (this.outgoing.containsKey(uuid)) {
                 final Connection connection = this.outgoing.get(uuid);
-                connection.deserialize(connectionCompound.getCompound("connection"));
+                connection.deserialize(connectionCompound.getCompound("connection"), registries);
             } else {
                 final ConnectionType<?> type = FairyLights.CONNECTION_TYPES.get(ResourceLocation.tryParse(connectionCompound.getString("type")));
                 if (type != null) {
                     final Connection connection = type.create(this.world, this, uuid);
-                    connection.deserialize(connectionCompound.getCompound("connection"));
+                    connection.deserialize(connectionCompound.getCompound("connection"), registries);
                     this.outgoing.put(uuid, connection);
                 }
             }

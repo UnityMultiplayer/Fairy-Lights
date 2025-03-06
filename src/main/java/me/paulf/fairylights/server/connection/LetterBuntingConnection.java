@@ -14,6 +14,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -213,8 +214,8 @@ public final class LetterBuntingConnection extends Connection implements Lettere
     }
 
     @Override
-    public void deserializeLogic(final CompoundTag compound) {
-        super.deserializeLogic(compound);
+    public void deserializeLogic(final CompoundTag compound, HolderLookup.Provider registries) {
+        super.deserializeLogic(compound, registries);
         this.text = StyledString.deserialize(compound.getCompound("text"));
     }
 

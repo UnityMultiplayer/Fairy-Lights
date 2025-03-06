@@ -45,7 +45,7 @@ public final class UpdateEntityFastenerMessage implements Message {
         public void receive(final UpdateEntityFastenerMessage message, final ClientPlayNetworking.Context context) {
             final Entity entity = context.client().level.getEntity(message.entityId);
             if (entity != null) {
-                CapabilityHandler.FASTENER_CAP.maybeGet(entity).ifPresent(f -> f.deserializeNBT(message.compound));
+                CapabilityHandler.FASTENER_CAP.maybeGet(entity).ifPresent(f -> f.deserializeNBT(message.compound, context.player().registryAccess()));
             }
         }
     }

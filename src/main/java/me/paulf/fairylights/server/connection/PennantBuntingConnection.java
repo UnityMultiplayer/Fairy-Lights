@@ -15,6 +15,7 @@ import me.paulf.fairylights.util.styledstring.StyledString;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -141,12 +142,12 @@ public final class PennantBuntingConnection extends HangingFeatureConnection<Pen
     }
 
     @Override
-    public void deserializeLogic(final CompoundTag compound) {
-        super.deserializeLogic(compound);
+    public void deserializeLogic(final CompoundTag compound, HolderLookup.Provider registries) {
+        super.deserializeLogic(compound, registries);
         this.pattern = new ArrayList<>();
         final ListTag patternList = compound.getList("pattern", Tag.TAG_COMPOUND);
         for (int i = 0; i < patternList.size(); i++) {
-            this.pattern.add(ItemStack.parseOptional(ServerLifecycleHooks.getCurrentServer().registryAccess(), patternList.getCompound(i)));
+            this.pattern.add(ItemStack.parseOptional(registries, patternList.getCompound(i)));
         }
         this.text = StyledString.deserialize(compound.getCompound("text"));
     }

@@ -20,11 +20,11 @@ import java.util.UUID;
 
 public interface Fastener<F extends FastenerAccessor> extends Component {
     CompoundTag serializeNBT();
-    void deserializeNBT(CompoundTag tag);
+    void deserializeNBT(CompoundTag tag, HolderLookup.Provider registries);
 
     @Override
     default void readFromNbt(CompoundTag tag, HolderLookup.Provider registryLookup) {
-        this.deserializeNBT(tag.getCompound("data"));
+        this.deserializeNBT(tag.getCompound("data"), registryLookup);
     }
 
     @Override

@@ -18,6 +18,7 @@ import me.paulf.fairylights.server.sound.FLSounds;
 import me.paulf.fairylights.server.string.StringType;
 import me.paulf.fairylights.server.string.StringTypes;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -256,8 +257,8 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
     }
 
     @Override
-    public void deserialize(final CompoundTag compound) {
-        super.deserialize(compound);
+    public void deserialize(final CompoundTag compound, HolderLookup.Provider registries) {
+        super.deserialize(compound, registries);
         if (this.jinglePlayer == null) {
             this.jinglePlayer = new JinglePlayer();
         }
@@ -295,8 +296,8 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
     }
 
     @Override
-    public void deserializeLogic(final CompoundTag compound) {
-        super.deserializeLogic(compound);
+    public void deserializeLogic(final CompoundTag compound, HolderLookup.Provider registries) {
+        super.deserializeLogic(compound, registries);
         this.string = HangingLightsConnectionItem.getString(compound);
         final ListTag patternList = compound.getList("pattern", Tag.TAG_COMPOUND);
         this.pattern = new ArrayList<>();

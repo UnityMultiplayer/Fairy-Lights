@@ -19,6 +19,7 @@ import me.paulf.fairylights.util.*;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.tag.convention.v2.ConventionalItemTags;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -392,9 +393,9 @@ public abstract class Connection implements NBTSerializable {
     }
 
     @Override
-    public void deserialize(final CompoundTag compound) {
+    public void deserialize(final CompoundTag compound, HolderLookup.Provider registries) {
         this.destination = FastenerType.deserialize(compound.getCompound("destination"));
-        this.deserializeLogic(compound.getCompound("logic"));
+        this.deserializeLogic(compound.getCompound("logic"), registries);
         this.slack = compound.contains("slack", Tag.TAG_ANY_NUMERIC) ? compound.getFloat("slack") : 1;
         this.drop = !compound.contains("drop", Tag.TAG_ANY_NUMERIC) || compound.getBoolean("drop");
         this.updateCatenary = true;
@@ -408,7 +409,7 @@ public abstract class Connection implements NBTSerializable {
         return DataComponentMap.EMPTY;
     }
 
-    public void deserializeLogic(final CompoundTag compound) {}
+    public void deserializeLogic(final CompoundTag compound, HolderLookup.Provider registries) {}
     public void deserializeLogic(final DataComponentMap components) {}
 
     static class Segment implements Feature {
