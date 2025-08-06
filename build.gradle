@@ -26,6 +26,9 @@ repositories {
         url = 'https://modmaven.dev'
     }
     maven {
+        url "https://maven.terraformersmc.com/releases"
+    }
+    maven {
         url 'https://maven.parchmentmc.org'
     }
     maven {
@@ -104,7 +107,7 @@ dependencies {
     include(modImplementation("org.ladysnake.cardinal-components-api:cardinal-components-block:$ccaVersion"))
     include(modImplementation("org.ladysnake.cardinal-components-api:cardinal-components-entity:$ccaVersion"))
 
-    def portingLibs = [ "accessors", "base", "client_events", "conditions", "core", "data", "fluids", "entity", "item_abilities", "lazy_registration", "level_events", "loot", "model_loader", "models", "render_types", "transfer" ]
+    def portingLibs = ["attributes", "base", "blocks", "brewing", "chunk_loading", "client_events", "common", "config", "core", "data", "entity", "fluids", "gametest", "gui_utils", "item_abilities", "items", "level_events", "loot", "mixin_extensions", "model_data", "model_loader", "models", "obj_loader", "recipe_book_categories", "registry", "render_types", "resources", "tags", "transfer"]
     for (lib in portingLibs) {
         modImplementation(include("io.github.fabricators_of_create.Porting-Lib:$lib:${property("porting_lib_version")}"))
     }

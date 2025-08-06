@@ -114,7 +114,7 @@ public final class GenericRecipeBuilder {
     }
 
     public GenericRecipeBuilder withIngredient(final char key, final TagKey<Item> tag) {
-        return this.withIngredient(key, new BasicRegularIngredient(LazyTagIngredient.of(tag)));
+        return this.withIngredient(key, new BasicRegularIngredient(Ingredient.of(tag)));
     }
 
     public GenericRecipeBuilder withIngredient(final char key, final RegularIngredient ingredient) {
@@ -151,7 +151,7 @@ public final class GenericRecipeBuilder {
     }
 
     public GenericRecipeBuilder withAuxiliaryIngredient(final TagKey<Item> tag, final boolean isRequired, final int limit) {
-        return this.withAuxiliaryIngredient(new InertBasicAuxiliaryIngredient(LazyTagIngredient.of(tag), isRequired, limit));
+        return this.withAuxiliaryIngredient(new InertBasicAuxiliaryIngredient(Ingredient.of(tag), isRequired, limit));
     }
 
     public GenericRecipeBuilder withAuxiliaryIngredient(final Ingredient ingredient) {
@@ -202,7 +202,7 @@ public final class GenericRecipeBuilder {
             return new BasicRegularIngredient(Ingredient.of((ItemStack) object));
         }
         if (object instanceof TagKey<?>) {
-            return new BasicRegularIngredient(LazyTagIngredient.of((TagKey<Item>) object));
+            return new BasicRegularIngredient(Ingredient.of((TagKey<Item>) object));
         }
         if (object instanceof RegularIngredient) {
             return (RegularIngredient) object;

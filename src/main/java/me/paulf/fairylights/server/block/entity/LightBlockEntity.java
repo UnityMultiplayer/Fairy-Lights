@@ -1,6 +1,6 @@
 package me.paulf.fairylights.server.block.entity;
 
-import io.github.fabricators_of_create.porting_lib.block.CustomUpdateTagHandlingBlockEntity;
+import io.github.fabricators_of_create.porting_lib.blocks.extensions.CustomUpdateTagHandlingBlockEntity;
 import me.paulf.fairylights.server.block.LightBlock;
 import me.paulf.fairylights.server.feature.light.Light;
 import me.paulf.fairylights.server.item.LightVariant;

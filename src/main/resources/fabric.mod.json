@@ -42,5 +42,6 @@
     "cardinal-components": [
       "fairylights:fastener"
     ]
-  }
+  },
+  "accessWidener": "fairylights.accesswidener"
 }

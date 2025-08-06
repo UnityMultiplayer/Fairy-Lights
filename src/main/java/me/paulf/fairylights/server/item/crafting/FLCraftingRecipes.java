@@ -113,7 +113,7 @@ public final class FLCraftingRecipes {
 
     public static final TagKey<Item> DYEABLE_LIGHTS = TagKey.create(Registries.ITEM, ResourceLocation.parse(FairyLights.ID + ":dyeable_lights"));
 
-    public static final RegularIngredient DYE_SUBTYPE_INGREDIENT = new BasicRegularIngredient(LazyTagIngredient.of(Tags.Items.DYES)) {
+    public static final RegularIngredient DYE_SUBTYPE_INGREDIENT = new BasicRegularIngredient(Ingredient.of(Tags.Items.DYES)) {
         @Override
         public ImmutableList<ImmutableList<ItemStack>> getInput(final ItemStack output) {
             return DyeableItem.getDyeColor(output).map(dye -> ImmutableList.of(OreDictUtils.getDyes(dye))).orElse(ImmutableList.of());
@@ -134,7 +134,7 @@ public final class FLCraftingRecipes {
         return new GenericRecipeBuilder(EDIT_COLOR)
             .withShape("I")
             .withIngredient('I', DYEABLE).withOutput('I')
-            .withAuxiliaryIngredient(new BasicAuxiliaryIngredient<Blender>(LazyTagIngredient.of(Tags.Items.DYES), true, 8) {
+            .withAuxiliaryIngredient(new BasicAuxiliaryIngredient<Blender>(Ingredient.of(Tags.Items.DYES), true, 8) {
                 @Override
                 public Blender accumulator() {
                     return new Blender();
@@ -158,7 +158,7 @@ public final class FLCraftingRecipes {
         return new GenericRecipeBuilder(LIGHT_TWINKLE)
             .withShape("L")
             .withIngredient('L', TWINKLING_LIGHTS).withOutput('L')
-            .withAuxiliaryIngredient(new InertBasicAuxiliaryIngredient(LazyTagIngredient.of(Tags.Items.DUSTS_GLOWSTONE), true, 1) {
+            .withAuxiliaryIngredient(new InertBasicAuxiliaryIngredient(Ingredient.of(Tags.Items.DUSTS_GLOWSTONE), true, 1) {
                 @Override
                 public ImmutableList<ImmutableList<ItemStack>> getInput(final ItemStack output) {
                     return output.has(FLComponents.TWINKLES) && output.get(FLComponents.TWINKLES) ? super.getInput(output) : ImmutableList.of();
@@ -188,7 +188,7 @@ public final class FLCraftingRecipes {
             .withShape("IG")
             .withIngredient('I', DYEABLE_LIGHTS).withOutput('I')
             .withIngredient('G', Tags.Items.NUGGETS_GOLD)
-            .withAuxiliaryIngredient(new BasicAuxiliaryIngredient<ListTag>(LazyTagIngredient.of(Tags.Items.DYES), true, 8) {
+            .withAuxiliaryIngredient(new BasicAuxiliaryIngredient<ListTag>(Ingredient.of(Tags.Items.DYES), true, 8) {
                 @Override
                 public ListTag accumulator() {
                     return new ListTag();
@@ -220,7 +220,7 @@ public final class FLCraftingRecipes {
             .withIngredient('I', ConventionalItemTags.IRON_INGOTS)
             .withIngredient('-', ConventionalItemTags.STRINGS)
             .withAuxiliaryIngredient(new LightIngredient(true))
-            .withAuxiliaryIngredient(new InertBasicAuxiliaryIngredient(LazyTagIngredient.of(Tags.Items.DYES_WHITE), false, 1) {
+            .withAuxiliaryIngredient(new InertBasicAuxiliaryIngredient(Ingredient.of(Tags.Items.DYES_WHITE), false, 1) {
                 @Override
                 public ImmutableList<ImmutableList<ItemStack>> getInput(final ItemStack output) {
                     return output.has(FLComponents.STRING_TYPE) && output.get(FLComponents.STRING_TYPE) == StringTypes.WHITE_STRING.get() ? super.getInput(output) : ImmutableList.of();
@@ -560,7 +560,7 @@ public final class FLCraftingRecipes {
 
     private static class LightIngredient extends BasicAuxiliaryIngredient<List<ItemStack>> {
         private LightIngredient(final boolean isRequired) {
-            super(LazyTagIngredient.of(LIGHTS), isRequired, 8);
+            super(Ingredient.of(LIGHTS), isRequired, 8);
         }
 
         @Override
@@ -611,7 +611,7 @@ public final class FLCraftingRecipes {
 
     private static class PennantIngredient extends BasicAuxiliaryIngredient<List<ItemStack>> {
         private PennantIngredient() {
-            super(LazyTagIngredient.of(PENNANTS), true, 8);
+            super(Ingredient.of(PENNANTS), true, 8);
         }
 
         @Override

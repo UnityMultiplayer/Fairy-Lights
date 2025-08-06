@@ -1,7 +1,7 @@
 package me.paulf.fairylights.server.block.entity;
 
-import io.github.fabricators_of_create.porting_lib.block.CustomRenderBoundingBoxBlockEntity;
-import io.github.fabricators_of_create.porting_lib.block.CustomUpdateTagHandlingBlockEntity;
+import io.github.fabricators_of_create.porting_lib.blocks.extensions.CustomRenderBoundingBoxBlockEntity;
+import io.github.fabricators_of_create.porting_lib.blocks.extensions.CustomUpdateTagHandlingBlockEntity;
 import me.paulf.fairylights.server.block.FLBlocks;
 import me.paulf.fairylights.server.block.FastenerBlock;
 import me.paulf.fairylights.server.capability.CapabilityHandler;
